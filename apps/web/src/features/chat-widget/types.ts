@@ -4,6 +4,7 @@ export type ChatMessage = {
   id: string;
   role: ChatRole;
   content: string;
+  suggestions?: string[]; // tappable replies shown under this message
 };
 
 // The public, safe-to-expose settings the widget needs. Never include

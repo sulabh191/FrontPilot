@@ -16,14 +16,19 @@ export function ChatWidget({ config }: { config: WidgetConfig }) {
   const [input, setInput] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const [isWaitingForFirstWord, setIsWaitingForFirstWord] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: "greeting", role: "assistant", content: config.greeting },
+    // The business's starter options are simply the greeting's suggestions.
+    {
+      id: "greeting",
+      role: "assistant",
+      content: config.greeting,
+      suggestions: config.suggestedQuestions,
+    },
   ]);
+  const abortRef = useRef<AbortController | null>(null);
   const listEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Keep the newest message in view.
   useEffect(() => {
     listEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isWaitingForFirstWord]);
@@ -40,7 +45,7 @@ export function ChatWidget({ config }: { config: WidgetConfig }) {
     void sendText(input);
   }
 
-  // Shared by the text box and the suggested-question buttons.
+  // Shared by the text box and the option buttons.
   async function sendText(rawText: string) {
     const text = rawText.trim();
     if (!text || isReplying) return;
@@ -55,25 +60,29 @@ export function ChatWidget({ config }: { config: WidgetConfig }) {
     const controller = new AbortController();
     abortRef.current = controller;
 
-    const updateReply = (update: (content: string) => string) =>
-      setMessages((current) =>
-        current.map((m) => (m.id === replyId ? { ...m, content: update(m.content) } : m)),
-      );
+    const updateReply = (update: (message: ChatMessage) => ChatMessage) =>
+      setMessages((current) => current.map((m) => (m.id === replyId ? update(m) : m)));
 
     try {
       let started = false;
       await sendMessage(
         config.tenantSlug,
         history,
-        (chunk) => {
-          if (!started) {
-            // First words arrived: swap the typing dots for a real message bubble.
-            started = true;
-            setIsWaitingForFirstWord(false);
-            setMessages((current) => [...current, { id: replyId, role: "assistant", content: chunk }]);
-          } else {
-            updateReply((content) => content + chunk);
-          }
+        {
+          onText: (chunk) => {
+            if (!started) {
+              // First words arrived: swap the typing dots for a real message bubble.
+              started = true;
+              setIsWaitingForFirstWord(false);
+              setMessages((current) => [
+                ...current,
+                { id: replyId, role: "assistant", content: chunk },
+              ]);
+            } else {
+              updateReply((m) => ({ ...m, content: m.content + chunk }));
+            }
+          },
+          onSuggestions: (options) => updateReply((m) => ({ ...m, suggestions: options })),
         },
         controller.signal,
       );
@@ -95,6 +104,11 @@ export function ChatWidget({ config }: { config: WidgetConfig }) {
     }
   }
 
+  // Options are only offered under the latest agent message, and not while it is replying.
+  const lastMessage = messages.at(-1);
+  const currentOptions =
+    !isReplying && lastMessage?.role === "assistant" ? (lastMessage.suggestions ?? []) : [];
+
   return (
     <div className="fixed right-5 bottom-5 z-50 flex flex-col items-end gap-3">
       {isOpen && (
@@ -105,7 +119,9 @@ export function ChatWidget({ config }: { config: WidgetConfig }) {
           <header className="flex items-center justify-between bg-indigo-600 px-4 py-3 text-white">
             <div>
               <p className="text-sm font-semibold">{config.agentName}</p>
-              <p className="text-xs text-indigo-100">{config.businessName} · Usually replies instantly</p>
+              <p className="text-xs text-indigo-100">
+                {config.businessName} · Usually replies instantly
+              </p>
             </div>
             <button
               type="button"
@@ -121,15 +137,15 @@ export function ChatWidget({ config }: { config: WidgetConfig }) {
             {messages.map((message) => (
               <MessageBubble key={message.id} message={message} />
             ))}
-            {/* Only before the visitor's first message. */}
-            {messages.length === 1 && (
-              <SuggestedQuestions questions={config.suggestedQuestions} onSelect={sendText} />
-            )}
             {isWaitingForFirstWord && <TypingIndicator />}
+            <SuggestedQuestions questions={currentOptions} onSelect={sendText} />
             <div ref={listEndRef} />
           </div>
 
-          <form onSubmit={handleSubmit} className="flex items-center gap-2 border-t border-slate-200 p-3">
+          <form
+            onSubmit={handleSubmit}
+            className="flex items-center gap-2 border-t border-slate-200 p-3"
+          >
             <input
               ref={inputRef}
               value={input}

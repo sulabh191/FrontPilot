@@ -1,14 +1,19 @@
+import { chatEventSchema } from "@/shared/contracts/chat-events";
 import type { ChatMessage } from "../types";
 
-// Sends the conversation to the FrontPilot agent and streams the reply.
-// `onText` is called with each new piece of text as it arrives.
-// Resolves with the full reply when the stream ends.
+type Handlers = {
+  onText: (chunk: string) => void;
+  onSuggestions: (options: string[]) => void;
+};
+
+// Sends the conversation to the FrontPilot agent and reads the streamed
+// events (one JSON object per line) as they arrive.
 export async function sendMessage(
   tenantSlug: string,
   history: ChatMessage[],
-  onText: (chunk: string) => void,
+  handlers: Handlers,
   signal?: AbortSignal,
-): Promise<string> {
+): Promise<void> {
   const response = await fetch("/api/v1/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -25,15 +30,26 @@ export async function sendMessage(
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
-  let fullText = "";
+  let buffer = "";
+
+  const handleLine = (line: string) => {
+    if (!line.trim()) return;
+    const parsed = chatEventSchema.safeParse(JSON.parse(line));
+    if (!parsed.success) return; // ignore unknown events, so the server can add new types safely
+    const event = parsed.data;
+    if (event.type === "text") handlers.onText(event.text);
+    if (event.type === "suggestions") handlers.onSuggestions(event.options);
+    if (event.type === "error") throw new Error(event.message);
+  };
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    const chunk = decoder.decode(value, { stream: true });
-    fullText += chunk;
-    onText(chunk);
+    buffer += decoder.decode(value, { stream: true });
+    // A network chunk can end in the middle of a line: keep the unfinished part.
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    lines.forEach(handleLine);
   }
-
-  return fullText;
+  handleLine(buffer);
 }

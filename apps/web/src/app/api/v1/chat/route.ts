@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   try {
     const stream = await runAgent(tenant, messages);
     return new Response(stream, {
-      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
+      headers: { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store" },
     });
   } catch (error) {
     console.error("[chat] agent failed", error);

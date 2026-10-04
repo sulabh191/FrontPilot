@@ -3,7 +3,7 @@ type SuggestedQuestionsProps = {
   onSelect: (question: string) => void;
 };
 
-// Tappable starter options shown under the greeting.
+// Tappable reply options shown under the latest agent message.
 export function SuggestedQuestions({ questions, onSelect }: SuggestedQuestionsProps) {
   if (questions.length === 0) return null;
 
