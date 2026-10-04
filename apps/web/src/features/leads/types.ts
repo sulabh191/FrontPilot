@@ -10,6 +10,6 @@ export type Lead = {
   score: LeadScore;
   stage: LeadStage;
   estimatedValue: number;
-  source: "Website chat" | "Email" | "Phone";
+  source: "Website chat" | "Email" | "SMS";
   createdAt: string;
 };

@@ -43,7 +43,7 @@ export async function saveAgentSettings(
     };
   }
 
-  writeSettings(tenant.id, parsed.data);
+  await writeSettings(tenant.id, parsed.data);
   revalidatePath("/dashboard/agent");
   return { status: "success", message: "Settings saved." };
 }

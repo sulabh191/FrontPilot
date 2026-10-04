@@ -11,3 +11,6 @@ export type ConversationRow = typeof conversations.$inferSelect;
 export type MessageRow = typeof messages.$inferSelect;
 export type LeadRow = typeof leads.$inferSelect;
 export type AppointmentRow = typeof appointments.$inferSelect;
+
+// Query helpers re-exported so apps don't depend on drizzle-orm directly.
+export { and, asc, count, desc, eq, gte, inArray, ne, sql } from "drizzle-orm";

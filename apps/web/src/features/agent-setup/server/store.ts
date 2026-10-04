@@ -1,28 +1,42 @@
 import "server-only";
+import { agentSettings, eq, getDb } from "@frontpilot/db";
 import type { AgentSettings } from "../schema";
 
+// Used when a business has not saved any settings yet.
 const defaultSettings: AgentSettings = {
-  agentName: "Rapid Plumbing Assistant",
-  greeting: "Hi! I'm the Rapid Plumbing assistant. How can I help with your plumbing today?",
+  agentName: "Assistant",
+  greeting: "Hi! How can I help you today?",
   tone: "friendly",
-  instructions:
-    "Never quote prices for jobs not on the price list; offer a free estimate instead.\nFor gas smells or flooding, tell the customer to call our emergency line right away.",
-  tools: { answerQuestions: true, qualifyLeads: true, bookAppointments: true, followUps: false },
+  instructions: "",
+  tools: { answerQuestions: true, qualifyLeads: true, bookAppointments: false, followUps: false },
   approvalMode: "review",
-  suggestedQuestions: ["Book a visit", "How much does it cost?", "I have an emergency", "What are your hours?"],
+  suggestedQuestions: [],
 };
 
-// Temporary in-memory storage, keyed by tenant. It resets when the server
-// restarts. Replaced by a Postgres table in the database step.
-// Stored on globalThis so dev hot-reloads and API routes share the same map.
-const globalStore = globalThis as unknown as { __agentSettings?: Map<string, AgentSettings> };
-const settingsByTenant = (globalStore.__agentSettings ??= new Map<string, AgentSettings>());
+export async function readSettings(tenantId: string): Promise<AgentSettings> {
+  const [row] = await getDb()
+    .select()
+    .from(agentSettings)
+    .where(eq(agentSettings.tenantId, tenantId))
+    .limit(1);
+  if (!row) return defaultSettings;
 
-export function readSettings(tenantId: string): AgentSettings {
-  // Merge with defaults so settings saved before a new field existed still work.
-  return { ...defaultSettings, ...settingsByTenant.get(tenantId) };
+  return {
+    agentName: row.agentName,
+    greeting: row.greeting,
+    tone: row.tone,
+    instructions: row.instructions,
+    tools: row.tools,
+    approvalMode: row.approvalMode,
+    suggestedQuestions: row.suggestedQuestions,
+  };
 }
 
-export function writeSettings(tenantId: string, settings: AgentSettings): void {
-  settingsByTenant.set(tenantId, settings);
+// Insert or update ("upsert"): one row per tenant.
+export async function writeSettings(tenantId: string, settings: AgentSettings): Promise<void> {
+  const values = { ...settings, updatedAt: new Date() };
+  await getDb()
+    .insert(agentSettings)
+    .values({ tenantId, ...values })
+    .onConflictDoUpdate({ target: agentSettings.tenantId, set: values });
 }

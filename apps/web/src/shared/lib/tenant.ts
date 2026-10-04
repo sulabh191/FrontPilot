@@ -1,25 +1,32 @@
+import "server-only";
+import { eq, getDb, tenants } from "@frontpilot/db";
+
 export type Tenant = {
   id: string;
   name: string;
   slug: string; // short public name used in URLs, e.g. /chat/rapid-plumbing
 };
 
-// Temporary tenant list until the database step.
-const tenants: Tenant[] = [
-  { id: "tenant_rapid_plumbing", name: "Rapid Plumbing", slug: "rapid-plumbing" },
-];
-
-const demoTenant = tenants[0]!;
+// Until login exists, the dashboard always shows the demo business.
+const DEMO_TENANT_SLUG = "rapid-plumbing";
 
 // The business whose dashboard is being viewed.
-// For now every visitor sees the demo business. When login is added,
-// this reads the signed-in user's organization instead, and no caller changes.
+// When login is added, this reads the signed-in user's organization instead,
+// and no caller changes.
 export async function getCurrentTenant(): Promise<Tenant> {
-  return demoTenant;
+  const tenant = await getTenantBySlug(DEMO_TENANT_SLUG);
+  if (!tenant) {
+    throw new Error(`Demo tenant "${DEMO_TENANT_SLUG}" not found. Run: pnpm db:seed`);
+  }
+  return tenant;
 }
 
-// Public lookup used by the chat widget, where there is no signed-in user:
-// the business is identified by the slug in the page or script tag.
+// Public lookup used by the chat widget, where there is no signed-in user.
 export async function getTenantBySlug(slug: string): Promise<Tenant | null> {
-  return tenants.find((tenant) => tenant.slug === slug) ?? null;
+  const [row] = await getDb()
+    .select({ id: tenants.id, name: tenants.name, slug: tenants.slug })
+    .from(tenants)
+    .where(eq(tenants.slug, slug))
+    .limit(1);
+  return row ?? null;
 }
