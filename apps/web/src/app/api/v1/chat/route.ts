@@ -1,19 +1,14 @@
-import { z } from "zod";
 import { runAgent } from "@/features/agent";
+import {
+  appendMessage,
+  countMessages,
+  createConversation,
+  findConversation,
+  getRecentMessages,
+  MAX_MESSAGES_PER_CONVERSATION,
+} from "@/features/conversations";
+import { chatRequestSchema, encodeChatEvent } from "@/shared/contracts/chat-events";
 import { getTenantBySlug } from "@/shared/lib/tenant";
-
-const chatRequestSchema = z.object({
-  tenantSlug: z.string().min(1).max(64),
-  messages: z
-    .array(
-      z.object({
-        role: z.enum(["user", "assistant"]),
-        content: z.string().trim().min(1).max(1000),
-      }),
-    )
-    .min(1)
-    .max(40),
-});
 
 // POST /api/v1/chat — public endpoint called by the chat widget.
 export async function POST(request: Request) {
@@ -22,23 +17,63 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return Response.json({ error: "Invalid request" }, { status: 400 });
   }
+  const { tenantSlug, conversationId: requestedId, message } = parsed.data;
 
-  const tenant = await getTenantBySlug(parsed.data.tenantSlug);
+  const tenant = await getTenantBySlug(tenantSlug);
   if (!tenant) {
     return Response.json({ error: "Unknown business" }, { status: 404 });
   }
 
-  // The model expects the conversation to start with the customer, so drop the greeting.
-  const messages = parsed.data.messages.slice(
-    parsed.data.messages.findIndex((m) => m.role === "user"),
-  );
-  if (messages.at(-1)?.role !== "user") {
-    return Response.json({ error: "Last message must be from the customer" }, { status: 400 });
+  // Continue an existing conversation (only if it belongs to this business) or start one.
+  let conversationId: string;
+  if (requestedId) {
+    const existing = await findConversation(requestedId, tenant.id);
+    if (!existing) return Response.json({ error: "Conversation not found" }, { status: 404 });
+    conversationId = existing.id;
+    if ((await countMessages(conversationId)) >= MAX_MESSAGES_PER_CONVERSATION) {
+      return Response.json({ error: "This conversation is too long" }, { status: 429 });
+    }
+  } else {
+    conversationId = await createConversation(tenant.id);
   }
 
+  await appendMessage({ conversationId, tenantId: tenant.id, role: "user", content: message });
+
+  // The history comes from the database, never from the browser.
+  const history = await getRecentMessages(conversationId);
+
   try {
-    const stream = await runAgent(tenant, messages);
-    return new Response(stream, {
+    const agentStream = await runAgent(tenant, history, {
+      onFinish: (result) =>
+        appendMessage({
+          conversationId,
+          tenantId: tenant.id,
+          role: "assistant",
+          content: result.text,
+          inputTokens: result.inputTokens,
+          outputTokens: result.outputTokens,
+        }),
+    });
+
+    // First tell the widget which conversation this is, then pass the agent's events through.
+    const encoder = new TextEncoder();
+    const body = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        controller.enqueue(encoder.encode(encodeChatEvent({ type: "conversation", conversationId })));
+        const reader = agentStream.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          controller.enqueue(value);
+        }
+        controller.close();
+      },
+      cancel() {
+        void agentStream.cancel();
+      },
+    });
+
+    return new Response(body, {
       headers: { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store" },
     });
   } catch (error) {

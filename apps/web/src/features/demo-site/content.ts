@@ -5,6 +5,7 @@ export const rapidPlumbing = {
   phone: "(555) 010-2468",
   emergencyPhone: "(555) 010-9111",
   serviceArea: "Springfield and surrounding towns, within 25 miles",
+  timeZone: "America/New_York",
   hours: [
     { days: "Monday – Friday", time: "7:00 AM – 7:00 PM" },
     { days: "Saturday", time: "8:00 AM – 4:00 PM" },

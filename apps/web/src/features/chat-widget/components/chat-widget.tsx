@@ -25,6 +25,8 @@ export function ChatWidget({ config }: { config: WidgetConfig }) {
       suggestions: config.suggestedQuestions,
     },
   ]);
+  // Set by the server after the first message; sent back with every later one.
+  const [conversationId, setConversationId] = useState<string | undefined>(undefined);
   const abortRef = useRef<AbortController | null>(null);
   const listEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -66,9 +68,9 @@ export function ChatWidget({ config }: { config: WidgetConfig }) {
     try {
       let started = false;
       await sendMessage(
-        config.tenantSlug,
-        history,
+        { tenantSlug: config.tenantSlug, conversationId, message: text },
         {
+          onConversation: setConversationId,
           onText: (chunk) => {
             if (!started) {
               // First words arrived: swap the typing dots for a real message bubble.

@@ -11,11 +11,33 @@ type PromptInput = {
   businessName: string;
   settings: AgentSettings;
   businessFacts: string;
+  now: Date;
+  timeZone: string;
 };
+
+// e.g. "Sunday, October 4, 2026, 7:02 PM (America/New_York)"
+function formatNow(now: Date, timeZone: string): string {
+  const text = now.toLocaleString("en-US", {
+    timeZone,
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${text} (${timeZone})`;
+}
 
 // Turns the owner's Agent setup into instructions for the model.
 // Kept as a pure function so it is easy to test and to version.
-export function buildSystemPrompt({ businessName, settings, businessFacts }: PromptInput): string {
+export function buildSystemPrompt({
+  businessName,
+  settings,
+  businessFacts,
+  now,
+  timeZone,
+}: PromptInput): string {
   const { tools } = settings;
 
   const capabilities = [
@@ -31,6 +53,9 @@ export function buildSystemPrompt({ businessName, settings, businessFacts }: Pro
   ].filter(Boolean);
 
   return `You are ${settings.agentName}, the website chat assistant for ${businessName}.
+
+# Current date and time
+${formatNow(now, timeZone)}. Use this to understand "today", "tomorrow" and "tonight".
 
 # Tone
 ${toneGuide[settings.tone]}
@@ -51,6 +76,14 @@ ${settings.instructions || "(none)"}
 - Make the options match your question exactly. If you asked "Is it leaking now or dripping?", offer those answers.
 - Skip it when you need free-form details such as a name, phone number or address.
 - Always write your reply text first; never call the tool without a reply.
+
+# Scheduling
+- Only accept visit times inside the opening hours in the business information. Times outside them (including later today after closing) are not available.
+- If the customer asks for a time outside opening hours, say so kindly and suggest the nearest time inside them. For a real emergency, give the emergency phone number instead.
+
+# Formatting
+- Write plain text only, as in a text message. No Markdown: no asterisks, no bold, no headings, no bullet symbols.
+- To list details, put each on its own line, like "Name: Sulabh".
 
 # Always
 - Keep replies to 1–3 short sentences unless the customer asks for detail.

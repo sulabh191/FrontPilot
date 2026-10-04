@@ -1,4 +1,5 @@
 import { cn } from "cn";
+import { toPlainText } from "../lib/plain-text";
 import type { ChatMessage } from "../types";
 
 export function MessageBubble({ message }: { message: ChatMessage }) {
@@ -13,7 +14,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
             : "rounded-bl-sm bg-slate-100 text-slate-900",
         )}
       >
-        {message.content}
+        {isUser ? message.content : toPlainText(message.content)}
       </p>
     </div>
   );

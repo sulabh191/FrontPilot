@@ -3,6 +3,10 @@ import { rapidPlumbing } from "@/features/demo-site";
 
 // TEMPORARY: business facts for the agent, written straight into the prompt.
 // Step 12 replaces this with a real knowledge base (documents → chunks → Qdrant search).
+export async function getBusinessTimeZone(tenantId: string): Promise<string> {
+  return tenantId === "tenant_rapid_plumbing" ? rapidPlumbing.timeZone : "America/New_York";
+}
+
 export async function getBusinessFacts(tenantId: string): Promise<string> {
   if (tenantId !== "tenant_rapid_plumbing") return "No business information available.";
 
