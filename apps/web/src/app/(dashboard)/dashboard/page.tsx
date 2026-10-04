@@ -1,11 +1,15 @@
-import { ComingSoon } from "@/shared/components/coming-soon";
+import { getOverview, OverviewDashboard } from "@/features/overview";
 import { PageHeader } from "@/shared/components/page-header";
+import { getCurrentTenant } from "@/shared/lib/tenant";
 
-export default function Page() {
+export default async function OverviewPage() {
+  const tenant = await getCurrentTenant();
+  const data = await getOverview(tenant.id);
+
   return (
     <>
       <PageHeader title="Overview" description="What your agent handled this week." />
-      <ComingSoon feature="Overview" />
+      <OverviewDashboard data={data} />
     </>
   );
 }

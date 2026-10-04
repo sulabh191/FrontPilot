@@ -1,6 +1,7 @@
 import { AppShell } from "@/shared/components/app-shell";
+import { getCurrentTenant } from "@/shared/lib/tenant";
 
-// Later, the business name comes from the signed-in organization.
-export default function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
-  return <AppShell businessName="Rapid Plumbing">{children}</AppShell>;
+export default async function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
+  const tenant = await getCurrentTenant();
+  return <AppShell businessName={tenant.name}>{children}</AppShell>;
 }
