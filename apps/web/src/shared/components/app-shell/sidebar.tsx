@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
+import { getInitials } from "@/shared/lib/format";
 import { Separator } from "@/shared/ui/separator";
 import { SidebarNav } from "./sidebar-nav";
 
@@ -9,11 +10,7 @@ type SidebarProps = {
 };
 
 export function Sidebar({ businessName }: SidebarProps) {
-  const initials = businessName
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .slice(0, 2);
+  const initials = getInitials(businessName);
 
   return (
     <aside className="bg-sidebar text-sidebar-foreground border-sidebar-border flex w-64 shrink-0 flex-col border-r">
