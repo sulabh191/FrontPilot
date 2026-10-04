@@ -1,0 +1,24 @@
+import "server-only";
+import type { AgentSettings } from "../schema";
+
+const defaultSettings: AgentSettings = {
+  agentName: "Rapid Plumbing Assistant",
+  greeting: "Hi! I'm the Rapid Plumbing assistant. How can I help with your plumbing today?",
+  tone: "friendly",
+  instructions:
+    "Never quote prices for jobs not on the price list; offer a free estimate instead.\nFor gas smells or flooding, tell the customer to call our emergency line right away.",
+  tools: { answerQuestions: true, qualifyLeads: true, bookAppointments: true, followUps: false },
+  approvalMode: "review",
+};
+
+// Temporary in-memory storage, keyed by tenant. It resets when the server
+// restarts. Replaced by a Postgres table in the database step.
+const settingsByTenant = new Map<string, AgentSettings>();
+
+export function readSettings(tenantId: string): AgentSettings {
+  return settingsByTenant.get(tenantId) ?? defaultSettings;
+}
+
+export function writeSettings(tenantId: string, settings: AgentSettings): void {
+  settingsByTenant.set(tenantId, settings);
+}
