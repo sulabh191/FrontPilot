@@ -1,0 +1,24 @@
+# Local development services. Start with: pnpm db:up
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: frontpilot-postgres
+    restart: unless-stopped
+    environment:
+      # Local-only credentials, never used in production.
+      POSTGRES_USER: frontpilot
+      POSTGRES_PASSWORD: frontpilot
+      POSTGRES_DB: frontpilot
+    ports:
+      # Host port 5433 avoids clashing with any Postgres already on your Mac (5432).
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U frontpilot -d frontpilot"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:
