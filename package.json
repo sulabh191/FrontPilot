@@ -1,26 +1,13 @@
 {
   "name": "frontpilot",
-  "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@12.9.1+sha512.06b055fff5cd20dc12781de173ced3310ce0951bf2ec620211a16045d5444d5c93a663210764ef29a653a610459ba0368f0e74f84d80c54723cf95aae7bc0d6d",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "next": "16.3.8",
-    "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.3.8",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "turbo": "latest"
   }
 }
