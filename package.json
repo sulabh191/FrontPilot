@@ -11,7 +11,10 @@
     "format:check": "prettier --check .",
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
-    "db:psql": "docker exec -it frontpilot-postgres psql -U frontpilot -d frontpilot"
+    "db:psql": "docker exec -it frontpilot-postgres psql -U frontpilot -d frontpilot",
+    "db:generate": "pnpm --filter @frontpilot/db generate",
+    "db:migrate": "pnpm --filter @frontpilot/db migrate",
+    "db:studio": "pnpm --filter @frontpilot/db studio"
   },
   "devDependencies": {
     "prettier": "^3.9.9",

@@ -1,7 +1,9 @@
+import path from "node:path";
 import type { NextConfig } from "next";
-import path from "path";
+
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Workspace packages ship TypeScript source; let Next.js compile them.
+  transpilePackages: ["@frontpilot/db"],
   turbopack: {
     // monorepo root: two levels up from apps/web
     root: path.join(__dirname, "../.."),
