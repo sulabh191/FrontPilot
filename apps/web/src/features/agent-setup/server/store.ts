@@ -13,7 +13,9 @@ const defaultSettings: AgentSettings = {
 
 // Temporary in-memory storage, keyed by tenant. It resets when the server
 // restarts. Replaced by a Postgres table in the database step.
-const settingsByTenant = new Map<string, AgentSettings>();
+// Stored on globalThis so dev hot-reloads and API routes share the same map.
+const globalStore = globalThis as unknown as { __agentSettings?: Map<string, AgentSettings> };
+const settingsByTenant = (globalStore.__agentSettings ??= new Map<string, AgentSettings>());
 
 export function readSettings(tenantId: string): AgentSettings {
   return settingsByTenant.get(tenantId) ?? defaultSettings;
