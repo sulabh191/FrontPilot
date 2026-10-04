@@ -14,6 +14,8 @@ export function ChatWidget({ config }: { config: WidgetConfig }) {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [isReplying, setIsReplying] = useState(false);
+  const [isWaitingForFirstWord, setIsWaitingForFirstWord] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: "greeting", role: "assistant", content: config.greeting },
   ]);
@@ -23,11 +25,14 @@ export function ChatWidget({ config }: { config: WidgetConfig }) {
   // Keep the newest message in view.
   useEffect(() => {
     listEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isReplying]);
+  }, [messages, isWaitingForFirstWord]);
 
   useEffect(() => {
     if (isOpen) inputRef.current?.focus();
   }, [isOpen]);
+
+  // Stop any reply in progress if the widget is removed from the page.
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -35,20 +40,52 @@ export function ChatWidget({ config }: { config: WidgetConfig }) {
     if (!text || isReplying) return;
 
     const history: ChatMessage[] = [...messages, { id: newId(), role: "user", content: text }];
+    const replyId = newId();
     setMessages(history);
     setInput("");
     setIsReplying(true);
+    setIsWaitingForFirstWord(true);
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const updateReply = (update: (content: string) => string) =>
+      setMessages((current) =>
+        current.map((m) => (m.id === replyId ? { ...m, content: update(m.content) } : m)),
+      );
 
     try {
-      const reply = await sendMessage(config.tenantSlug, history);
-      setMessages((current) => [...current, { id: newId(), role: "assistant", content: reply }]);
-    } catch {
+      let started = false;
+      await sendMessage(
+        config.tenantSlug,
+        history,
+        (chunk) => {
+          if (!started) {
+            // First words arrived: swap the typing dots for a real message bubble.
+            started = true;
+            setIsWaitingForFirstWord(false);
+            setMessages((current) => [...current, { id: replyId, role: "assistant", content: chunk }]);
+          } else {
+            updateReply((content) => content + chunk);
+          }
+        },
+        controller.signal,
+      );
+      if (!started) throw new Error("Empty reply");
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      console.error("[chat-widget]", error);
       setMessages((current) => [
-        ...current,
-        { id: newId(), role: "assistant", content: "Sorry, something went wrong. Please try again." },
+        ...current.filter((m) => m.id !== replyId),
+        {
+          id: replyId,
+          role: "assistant",
+          content: "Sorry, I'm having trouble right now. Please try again, or call us directly.",
+        },
       ]);
     } finally {
       setIsReplying(false);
+      setIsWaitingForFirstWord(false);
     }
   }
 
@@ -78,7 +115,7 @@ export function ChatWidget({ config }: { config: WidgetConfig }) {
             {messages.map((message) => (
               <MessageBubble key={message.id} message={message} />
             ))}
-            {isReplying && <TypingIndicator />}
+            {isWaitingForFirstWord && <TypingIndicator />}
             <div ref={listEndRef} />
           </div>
 
