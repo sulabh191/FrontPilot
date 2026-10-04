@@ -13,4 +13,5 @@ export type WidgetConfig = {
   businessName: string;
   agentName: string;
   greeting: string;
+  suggestedQuestions: string[];
 };

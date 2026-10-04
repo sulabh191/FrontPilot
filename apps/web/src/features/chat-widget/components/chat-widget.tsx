@@ -5,6 +5,7 @@ import { MessageCircle, SendHorizontal, X } from "lucide-react";
 import { sendMessage } from "../lib/send-message";
 import type { ChatMessage, WidgetConfig } from "../types";
 import { MessageBubble } from "./message-bubble";
+import { SuggestedQuestions } from "./suggested-questions";
 import { TypingIndicator } from "./typing-indicator";
 
 let nextId = 0;
@@ -34,9 +35,14 @@ export function ChatWidget({ config }: { config: WidgetConfig }) {
   // Stop any reply in progress if the widget is removed from the page.
   useEffect(() => () => abortRef.current?.abort(), []);
 
-  async function handleSubmit(event: React.FormEvent) {
+  function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    const text = input.trim();
+    void sendText(input);
+  }
+
+  // Shared by the text box and the suggested-question buttons.
+  async function sendText(rawText: string) {
+    const text = rawText.trim();
     if (!text || isReplying) return;
 
     const history: ChatMessage[] = [...messages, { id: newId(), role: "user", content: text }];
@@ -115,6 +121,10 @@ export function ChatWidget({ config }: { config: WidgetConfig }) {
             {messages.map((message) => (
               <MessageBubble key={message.id} message={message} />
             ))}
+            {/* Only before the visitor's first message. */}
+            {messages.length === 1 && (
+              <SuggestedQuestions questions={config.suggestedQuestions} onSelect={sendText} />
+            )}
             {isWaitingForFirstWord && <TypingIndicator />}
             <div ref={listEndRef} />
           </div>

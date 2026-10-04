@@ -14,5 +14,6 @@ export async function getWidgetConfig(slug: string): Promise<WidgetConfig | null
     businessName: tenant.name,
     agentName: settings.agentName,
     greeting: settings.greeting,
+    suggestedQuestions: settings.suggestedQuestions,
   };
 }

@@ -9,7 +9,13 @@ import { Label } from "@/shared/ui/label";
 import { Separator } from "@/shared/ui/separator";
 import { Textarea } from "@/shared/ui/textarea";
 import { toneLabels, toolLabels } from "../constants";
-import { approvalModes, toneOptions, toolKeys, type AgentSettings } from "../schema";
+import {
+  approvalModes,
+  MAX_SUGGESTED_QUESTIONS,
+  toneOptions,
+  toolKeys,
+  type AgentSettings,
+} from "../schema";
 import { saveAgentSettings, type SaveSettingsState } from "../server/actions";
 import { FieldError } from "./field-error";
 import { ToolToggle } from "./tool-toggle";
@@ -100,6 +106,31 @@ export function AgentSettingsForm({ settings }: { settings: AgentSettings }) {
             aria-invalid={!!errors.instructions}
           />
           <FieldError errors={errors.instructions} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Suggested questions</CardTitle>
+          <CardDescription>
+            Shown as buttons when a visitor opens the chat, so they can tap instead of typing. Leave a
+            box empty to show fewer.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2">
+          {Array.from({ length: MAX_SUGGESTED_QUESTIONS }, (_, i) => (
+            <Input
+              key={i}
+              name="suggestedQuestions"
+              aria-label={`Suggested question ${i + 1}`}
+              placeholder={`Option ${i + 1}`}
+              maxLength={40}
+              defaultValue={settings.suggestedQuestions[i] ?? ""}
+            />
+          ))}
+          <div className="sm:col-span-2">
+            <FieldError errors={errors.suggestedQuestions} />
+          </div>
         </CardContent>
       </Card>
 

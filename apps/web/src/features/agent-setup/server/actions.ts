@@ -27,6 +27,11 @@ export async function saveAgentSettings(
     instructions: formData.get("instructions") ?? "",
     tools: Object.fromEntries(toolKeys.map((key) => [key, formData.get(`tool.${key}`) === "true"])),
     approvalMode: formData.get("approvalMode"),
+    // Empty boxes are skipped, so the owner can use fewer than four options.
+    suggestedQuestions: formData
+      .getAll("suggestedQuestions")
+      .map((value) => String(value).trim())
+      .filter(Boolean),
   });
 
   if (!parsed.success) {

@@ -20,6 +20,11 @@ export const agentSettingsSchema = z.object({
     followUps: z.boolean(),
   }),
   approvalMode: z.enum(approvalModes),
+  suggestedQuestions: z
+    .array(z.string().trim().min(2, "Each option needs at least 2 characters.").max(40, "Keep each option under 40 characters."))
+    .max(4),
 });
+
+export const MAX_SUGGESTED_QUESTIONS = 4;
 
 export type AgentSettings = z.infer<typeof agentSettingsSchema>;
