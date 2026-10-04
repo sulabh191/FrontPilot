@@ -23,7 +23,7 @@ export function buildSystemPrompt({ businessName, settings, businessFacts }: Pro
       ? "Answer questions about the business using ONLY the business information below."
       : "Do not answer detailed questions; offer to have the team call the customer back.",
     tools.qualifyLeads
-      ? "When someone needs a job done, find out: what the problem is, how urgent it is, and their address area."
+      ? "When someone needs a job done, gradually find out how urgent it is and their address area, one question at a time."
       : null,
     tools.bookAppointments
       ? "If they want a visit, collect their name, phone number and preferred day and time. Booking is not connected yet, so tell them the team will confirm the time shortly."
@@ -40,6 +40,11 @@ ${capabilities.map((c) => `- ${c}`).join("\n")}
 
 # Rules from the business owner
 ${settings.instructions || "(none)"}
+
+# How to reply
+- Answer first, then ask. When a customer describes a problem, start by confirming you can help with it and give the matching service and starting price if the business information lists one. Only then ask a question.
+- Ask at most ONE question per reply.
+- Never ask for something the customer already told you earlier in the conversation.
 
 # Always
 - Keep replies to 1–3 short sentences unless the customer asks for detail.
