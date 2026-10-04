@@ -41,7 +41,14 @@ const steps = [
   },
 ];
 
-const audiences = ["Home services", "Clinics & dentists", "Salons & spas", "Agencies", "Real estate", "Local shops"];
+const audiences = [
+  "Home services",
+  "Clinics & dentists",
+  "Salons & spas",
+  "Agencies",
+  "Real estate",
+  "Local shops",
+];
 
 export default function Home() {
   return (
@@ -53,9 +60,15 @@ export default function Home() {
             Front<span className="text-indigo-600">Pilot</span>
           </Link>
           <nav className="hidden gap-8 text-sm text-slate-600 md:flex">
-            <a href="#features" className="hover:text-slate-900">Features</a>
-            <a href="#how" className="hover:text-slate-900">How it works</a>
-            <Link href="/demo/rapid-plumbing" className="hover:text-slate-900">Live demo</Link>
+            <a href="#features" className="hover:text-slate-900">
+              Features
+            </a>
+            <a href="#how" className="hover:text-slate-900">
+              How it works
+            </a>
+            <Link href="/demo/rapid-plumbing" className="hover:text-slate-900">
+              Live demo
+            </Link>
           </nav>
           <Link
             href="/dashboard"
@@ -73,13 +86,13 @@ export default function Home() {
             <p className="mb-4 inline-block rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
               No-code AI agents for small business
             </p>
-            <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-5xl">
+            <h1 className="text-4xl leading-tight font-bold tracking-tight md:text-5xl">
               Build an AI agent that talks to your customers, in minutes.
             </h1>
             <p className="mt-6 text-lg text-slate-600">
-              FrontPilot lets any business create its own AI agent, with no code. It chats with website
-              visitors, qualifies leads, books appointments and follows up, and logs everything in a
-              built-in CRM.
+              FrontPilot lets any business create its own AI agent, with no code. It chats with
+              website visitors, qualifies leads, books appointments and follows up, and logs
+              everything in a built-in CRM.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
@@ -95,7 +108,9 @@ export default function Home() {
                 See a live demo
               </Link>
             </div>
-            <p className="mt-4 text-sm text-slate-500">Set up in under 10 minutes · You approve before anything is sent</p>
+            <p className="mt-4 text-sm text-slate-500">
+              Set up in under 10 minutes · You approve before anything is sent
+            </p>
           </div>
 
           {/* Chat preview */}
@@ -122,9 +137,15 @@ export default function Home() {
                 You&apos;re booked for 9:00 AM tomorrow. I&apos;ve texted you a confirmation. 👍
               </div>
               <div className="flex flex-wrap gap-2 pt-1 text-xs">
-                <span className="rounded-full bg-green-100 px-2 py-1 text-green-700">Appointment booked</span>
-                <span className="rounded-full bg-amber-100 px-2 py-1 text-amber-700">Lead: hot</span>
-                <span className="rounded-full bg-slate-200 px-2 py-1 text-slate-700">Added to CRM</span>
+                <span className="rounded-full bg-green-100 px-2 py-1 text-green-700">
+                  Appointment booked
+                </span>
+                <span className="rounded-full bg-amber-100 px-2 py-1 text-amber-700">
+                  Lead: hot
+                </span>
+                <span className="rounded-full bg-slate-200 px-2 py-1 text-slate-700">
+                  Added to CRM
+                </span>
               </div>
             </div>
           </div>
@@ -144,8 +165,8 @@ export default function Home() {
         <section id="features" className="mx-auto max-w-6xl px-6 py-20">
           <h2 className="text-3xl font-bold tracking-tight">One agent. Five jobs.</h2>
           <p className="mt-3 max-w-2xl text-slate-600">
-            Turn on what your business needs. Your agent handles it around the clock and hands off to you
-            when a human touch is needed.
+            Turn on what your business needs. Your agent handles it around the clock and hands off
+            to you when a human touch is needed.
           </p>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f) => (
@@ -184,7 +205,8 @@ export default function Home() {
             <div>
               <h3 className="font-semibold">You stay in control</h3>
               <p className="mt-2 text-sm text-slate-600">
-                Start in review mode and approve every reply, or let it send automatically once you trust it.
+                Start in review mode and approve every reply, or let it send automatically once you
+                trust it.
               </p>
             </div>
             <div>
@@ -205,7 +227,9 @@ export default function Home() {
         {/* CTA */}
         <section className="mx-auto max-w-6xl px-6 pb-24">
           <div className="rounded-2xl bg-indigo-600 px-8 py-14 text-center text-white">
-            <h2 className="text-3xl font-bold tracking-tight">Give your business a front desk that never sleeps.</h2>
+            <h2 className="text-3xl font-bold tracking-tight">
+              Give your business a front desk that never sleeps.
+            </h2>
             <p className="mt-3 text-indigo-100">Free while in beta. No credit card needed.</p>
             <Link
               href="/dashboard"

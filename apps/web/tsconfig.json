@@ -18,8 +18,9 @@
         "name": "next"
       }
     ],
+    "noUncheckedIndexedAccess": true,
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": [
