@@ -14,7 +14,8 @@
     "db:psql": "docker exec -it frontpilot-postgres psql -U frontpilot -d frontpilot",
     "db:generate": "pnpm --filter @frontpilot/db generate",
     "db:migrate": "pnpm --filter @frontpilot/db migrate",
-    "db:studio": "pnpm --filter @frontpilot/db studio"
+    "db:studio": "pnpm --filter @frontpilot/db studio",
+    "db:seed": "pnpm --filter @frontpilot/db seed"
   },
   "devDependencies": {
     "prettier": "^3.9.9",
