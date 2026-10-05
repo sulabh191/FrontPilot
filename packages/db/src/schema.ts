@@ -19,9 +19,10 @@ export const toneEnum = pgEnum("tone", ["friendly", "professional", "casual"]);
 export const approvalModeEnum = pgEnum("approval_mode", ["review", "auto"]);
 export const channelEnum = pgEnum("channel", ["website_chat", "email", "sms"]);
 export const conversationStatusEnum = pgEnum("conversation_status", [
-  "open",
-  "needs_owner",
-  "resolved_by_ai",
+  "open", // active chat, nothing needed from the owner yet
+  "needs_owner", // waiting on the owner (approval, custom quote, follow-up)
+  "resolved_by_ai", // finished without a human
+  "resolved_by_owner", // finished after the owner stepped in
 ]);
 export const messageRoleEnum = pgEnum("message_role", ["user", "assistant"]);
 export const leadStageEnum = pgEnum("lead_stage", ["new", "qualified", "booked", "won", "lost"]);

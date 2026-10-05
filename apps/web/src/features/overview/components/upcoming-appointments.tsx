@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ApprovalActions } from "@/features/appointments";
 import { Badge } from "@/shared/ui/badge";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import type { UpcomingAppointment } from "../types";
@@ -27,9 +28,11 @@ export function UpcomingAppointments({ appointments }: { appointments: UpcomingA
                   {appt.service} · {appt.when}
                 </p>
               </div>
-              <Badge variant={appt.status === "Confirmed" ? "secondary" : "outline"}>
-                {appt.status}
-              </Badge>
+              {appt.status === "Awaiting approval" ? (
+                <ApprovalActions appointmentId={appt.id} />
+              ) : (
+                <Badge variant="secondary">{appt.status}</Badge>
+              )}
             </li>
           ))}
         </ul>

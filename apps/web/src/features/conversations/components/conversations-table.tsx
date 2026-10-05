@@ -16,6 +16,7 @@ const statusTone: Record<ConversationStatus, Tone> = {
   "Needs you": "warning",
   Open: "neutral",
   "Resolved by AI": "success",
+  "Resolved by you": "neutral",
 };
 
 export function ConversationsTable({ conversations }: { conversations: Conversation[] }) {

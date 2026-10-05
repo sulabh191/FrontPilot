@@ -1,4 +1,4 @@
-export type ConversationStatus = "Needs you" | "Open" | "Resolved by AI";
+export type ConversationStatus = "Needs you" | "Open" | "Resolved by AI" | "Resolved by you";
 export type Channel = "Website chat" | "Email" | "SMS";
 
 export type Conversation = {

@@ -16,6 +16,7 @@ const statusLabel: Record<ConversationRow["status"], ConversationStatus> = {
   needs_owner: "Needs you",
   open: "Open",
   resolved_by_ai: "Resolved by AI",
+  resolved_by_owner: "Resolved by you",
 };
 const channelLabel: Record<ConversationRow["channel"], Channel> = {
   website_chat: "Website chat",
@@ -26,6 +27,7 @@ const statusPriority: Record<ConversationStatus, number> = {
   "Needs you": 0,
   Open: 1,
   "Resolved by AI": 2,
+  "Resolved by you": 2,
 };
 
 // A tenant's latest conversations, with anything needing the owner first.

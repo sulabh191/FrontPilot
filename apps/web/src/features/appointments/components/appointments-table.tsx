@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/shared/ui/table";
 import type { Appointment, AppointmentStatus } from "../types";
+import { ApprovalActions } from "./approval-actions";
 
 const statusTone: Record<AppointmentStatus, Tone> = {
   Confirmed: "success",
@@ -26,7 +27,8 @@ export function AppointmentsTable({ appointments }: { appointments: Appointment[
             <TableHead>Customer</TableHead>
             <TableHead>Service</TableHead>
             <TableHead>Booked by</TableHead>
-            <TableHead className="pr-4">Status</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="pr-4 text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -42,8 +44,11 @@ export function AppointmentsTable({ appointments }: { appointments: Appointment[
               </TableCell>
               <TableCell>{a.service}</TableCell>
               <TableCell className="text-muted-foreground">{a.bookedBy}</TableCell>
-              <TableCell className="pr-4">
+              <TableCell>
                 <ToneBadge tone={statusTone[a.status]}>{a.status}</ToneBadge>
+              </TableCell>
+              <TableCell className="pr-4 text-right">
+                {a.status === "Awaiting approval" && <ApprovalActions appointmentId={a.id} />}
               </TableCell>
             </TableRow>
           ))}

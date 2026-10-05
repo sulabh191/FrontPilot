@@ -12,7 +12,7 @@ export function ApprovalBanner({ appointments }: { appointments: Appointment[] }
         <span className="font-medium">
           {pending.length} booking{pending.length > 1 ? "s" : ""} waiting for your approval.
         </span>{" "}
-        Your agent is in review mode, so customers are told their time is pending.
+        Approve or decline them below. Customers were told their time is pending.
       </p>
     </div>
   );
