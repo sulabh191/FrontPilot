@@ -16,14 +16,14 @@ const input = z.object({
   service: z.string().trim().min(2).max(120),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
-  address: z.string().trim().max(200).optional(),
+  address: z.string().trim().min(5, "Need the street address for the visit").max(200),
 });
 
 export const bookAppointment: AgentTool = {
   definition: {
     name: "book_appointment",
     description:
-      "Book a visit for the customer. Only call this after check_availability returned the time, and after the customer gave their name and phone number and agreed to the time.",
+      "Book a visit for the customer. Only call this after check_availability returned the time, and after the customer gave their name, phone number and street address and agreed to the time.",
     input_schema: {
       type: "object",
       properties: {
@@ -32,9 +32,9 @@ export const bookAppointment: AgentTool = {
         service: { type: "string", description: "Short description of the job, e.g. 'Kitchen sink leak'." },
         date: { type: "string", description: "YYYY-MM-DD" },
         time: { type: "string", description: "The exact 'value' from check_availability, HH:MM 24-hour." },
-        address: { type: "string", description: "Optional street address, if the customer gave it." },
+        address: { type: "string", description: "Street address where the work is needed." },
       },
-      required: ["customer_name", "phone", "service", "date", "time"],
+      required: ["customer_name", "phone", "service", "date", "time", "address"],
     },
   },
   async execute(raw, ctx) {

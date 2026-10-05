@@ -11,7 +11,7 @@ export type BookingRequest = {
   service: string;
   date: string; // "YYYY-MM-DD", business time zone
   time: string; // "HH:MM" 24-hour, business time zone
-  address?: string;
+  address: string;
   requireApproval: boolean; // review mode → owner must approve
 };
 
