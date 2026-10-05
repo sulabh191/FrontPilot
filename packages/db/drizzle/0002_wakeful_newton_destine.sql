@@ -1,0 +1,1 @@
+ALTER TYPE "public"."conversation_status" ADD VALUE 'resolved_by_owner';
