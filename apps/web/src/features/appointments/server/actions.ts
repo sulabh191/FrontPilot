@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { and, appointments, conversations, eq, getDb, leads } from "@frontpilot/db";
+import { notifyBookingUpdate } from "@/features/notifications";
 import { getCurrentTenant } from "@/shared/lib/tenant";
 
 export type ApprovalResult = { ok: boolean; message: string };
@@ -56,6 +57,11 @@ async function decide(appointmentId: string, decision: "approve" | "decline"): P
   });
 
   if (!result) return { ok: false, message: "This booking was already handled." };
+
+  // After the database change is committed, tell the customer. A failed text is logged, not fatal.
+  await notifyBookingUpdate(parsed.data, decision === "approve" ? "confirmed" : "declined").catch(
+    (error) => console.error("[approval] notification failed", error),
+  );
 
   // Every dashboard page shows appointment data, so refresh them all.
   revalidatePath("/dashboard", "layout");

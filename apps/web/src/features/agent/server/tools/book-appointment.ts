@@ -17,6 +17,7 @@ const input = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   address: z.string().trim().min(5, "Need the street address for the visit").max(200),
+  sms_consent: z.boolean(),
 });
 
 export const bookAppointment: AgentTool = {
@@ -33,8 +34,12 @@ export const bookAppointment: AgentTool = {
         date: { type: "string", description: "YYYY-MM-DD" },
         time: { type: "string", description: "The exact 'value' from check_availability, HH:MM 24-hour." },
         address: { type: "string", description: "Street address where the work is needed." },
+        sms_consent: {
+          type: "boolean",
+          description: "true only if the customer said yes to receiving text updates about this booking.",
+        },
       },
-      required: ["customer_name", "phone", "service", "date", "time", "address"],
+      required: ["customer_name", "phone", "service", "date", "time", "address", "sms_consent"],
     },
   },
   async execute(raw, ctx) {
@@ -53,6 +58,7 @@ export const bookAppointment: AgentTool = {
       date: d.date,
       time: d.time,
       address: d.address,
+      smsConsent: d.sms_consent,
       requireApproval: ctx.settings.approvalMode === "review",
     });
 

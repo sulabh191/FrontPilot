@@ -1,0 +1,1 @@
+ALTER TABLE "leads" ADD COLUMN "sms_consent" boolean DEFAULT false NOT NULL;

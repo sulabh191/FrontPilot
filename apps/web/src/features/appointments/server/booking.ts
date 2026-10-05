@@ -1,5 +1,6 @@
 import "server-only";
 import { and, appointments, conversations, eq, getDb, leads } from "@frontpilot/db";
+import { notifyBookingUpdate } from "@/features/notifications";
 import { zonedTimeToUtc } from "@/shared/lib/time-zone";
 import { getAvailableSlots, getTenantTimeZone } from "./availability";
 
@@ -12,6 +13,7 @@ export type BookingRequest = {
   date: string; // "YYYY-MM-DD", business time zone
   time: string; // "HH:MM" 24-hour, business time zone
   address: string;
+  smsConsent: boolean; // customer agreed to receive texts about this booking
   requireApproval: boolean; // review mode → owner must approve
 };
 
@@ -63,6 +65,7 @@ export async function bookAppointment(req: BookingRequest): Promise<BookingResul
         conversationId: req.conversationId,
         name: req.customerName,
         phone: req.phone,
+        smsConsent: req.smsConsent,
         service: req.service,
         score: "hot", // asked for a visit: highest intent
         stage: "booked",
@@ -97,6 +100,13 @@ export async function bookAppointment(req: BookingRequest): Promise<BookingResul
 
     return appointment!.id;
   });
+
+  // Auto mode: the booking is final now, so tell the customer. Never fails the booking.
+  if (status === "confirmed") {
+    await notifyBookingUpdate(appointmentId, "confirmed").catch((error) =>
+      console.error("[booking] notification failed", error),
+    );
+  }
 
   return { ok: true, appointmentId, startsAt, status };
 }

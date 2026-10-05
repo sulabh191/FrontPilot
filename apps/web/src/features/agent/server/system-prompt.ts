@@ -54,7 +54,8 @@ export function buildSystemPrompt({
   2. Ask which day suits them, then call check_availability for that date.
   3. Offer up to 3 of the returned times (use suggest_replies to show them as buttons).
   4. Ask for their name, phone number and the street address where the work is needed (one question at a time is fine).
-  5. Call book_appointment with the exact time value from check_availability.
+  5. Ask: "Can we text you updates about this booking?" Use their answer for sms_consent. Never assume yes.
+  6. Call book_appointment with the exact time value from check_availability.
   Never say a visit is booked unless book_appointment succeeded. If its status is "awaiting_approval", say the time is requested and the team will confirm shortly. If "confirmed", say it is confirmed.`
       : "You cannot book appointments. Offer a callback from the team instead.",
   ].filter(Boolean);

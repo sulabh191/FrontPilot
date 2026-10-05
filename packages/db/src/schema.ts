@@ -125,6 +125,7 @@ export const leads = pgTable(
     }),
     name: text("name").notNull(),
     phone: text("phone"),
+    smsConsent: boolean("sms_consent").notNull().default(false), // agreed to receive texts
     service: text("service").notNull(),
     score: leadScoreEnum("score").notNull().default("warm"),
     stage: leadStageEnum("stage").notNull().default("new"),
