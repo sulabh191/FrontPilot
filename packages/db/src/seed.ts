@@ -33,7 +33,22 @@ async function seed() {
   await db.transaction(async (tx) => {
     await tx.delete(tenants).where(eq(tenants.id, TENANT_ID));
 
-    await tx.insert(tenants).values({ id: TENANT_ID, name: "Rapid Plumbing", slug: "rapid-plumbing" });
+    await tx.insert(tenants).values({
+      id: TENANT_ID,
+      name: "Rapid Plumbing",
+      slug: "rapid-plumbing",
+      timeZone: "America/New_York",
+      appointmentMinutes: 60,
+      openingHours: {
+        mon: { open: "07:00", close: "19:00" },
+        tue: { open: "07:00", close: "19:00" },
+        wed: { open: "07:00", close: "19:00" },
+        thu: { open: "07:00", close: "19:00" },
+        fri: { open: "07:00", close: "19:00" },
+        sat: { open: "08:00", close: "16:00" },
+        sun: null, // emergencies only
+      },
+    });
 
     await tx.insert(agentSettings).values({
       tenantId: TENANT_ID,

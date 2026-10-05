@@ -44,6 +44,7 @@ export async function POST(request: Request) {
 
   try {
     const agentStream = await runAgent(tenant, history, {
+      conversationId,
       onFinish: (result) =>
         appendMessage({
           conversationId,

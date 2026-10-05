@@ -35,11 +35,18 @@ export const bookedByEnum = pgEnum("booked_by", ["ai_agent", "staff"]);
 
 // ---------- tables ----------
 
+// Weekly opening hours in the business's local time. null = closed that day.
+export type Weekday = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat";
+export type OpeningHours = Record<Weekday, { open: string; close: string } | null>; // "07:00"
+
 // One row per business using FrontPilot.
 export const tenants = pgTable("tenants", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
+  timeZone: text("time_zone").notNull().default("America/New_York"),
+  openingHours: jsonb("opening_hours").$type<OpeningHours>(),
+  appointmentMinutes: integer("appointment_minutes").notNull().default(60),
   createdAt: createdAt(),
 });
 

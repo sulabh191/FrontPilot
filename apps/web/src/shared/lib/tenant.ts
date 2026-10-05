@@ -5,6 +5,7 @@ export type Tenant = {
   id: string;
   name: string;
   slug: string; // short public name used in URLs, e.g. /chat/rapid-plumbing
+  timeZone: string; // IANA name, e.g. "America/New_York"
 };
 
 // Until login exists, the dashboard always shows the demo business.
@@ -24,7 +25,7 @@ export async function getCurrentTenant(): Promise<Tenant> {
 // Public lookup used by the chat widget, where there is no signed-in user.
 export async function getTenantBySlug(slug: string): Promise<Tenant | null> {
   const [row] = await getDb()
-    .select({ id: tenants.id, name: tenants.name, slug: tenants.slug })
+    .select({ id: tenants.id, name: tenants.name, slug: tenants.slug, timeZone: tenants.timeZone })
     .from(tenants)
     .where(eq(tenants.slug, slug))
     .limit(1);

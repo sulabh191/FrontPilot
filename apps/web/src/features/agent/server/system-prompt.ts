@@ -1,5 +1,6 @@
 import "server-only";
 import type { AgentSettings } from "@/features/agent-setup";
+import { dateInZone } from "@/shared/lib/time-zone";
 
 const toneGuide: Record<AgentSettings["tone"], string> = {
   friendly: "Warm and upbeat, like a helpful receptionist. Short sentences.",
@@ -48,14 +49,21 @@ export function buildSystemPrompt({
       ? "When someone needs a job done, gradually find out how urgent it is and their address area, one question at a time."
       : null,
     tools.bookAppointments
-      ? "If they want a visit, collect their name, phone number and preferred day and time. Booking is not connected yet, so tell them the team will confirm the time shortly."
+      ? `If they want a visit:
+  1. Make sure you know what the job is.
+  2. Ask which day suits them, then call check_availability for that date.
+  3. Offer up to 3 of the returned times (use suggest_replies to show them as buttons).
+  4. Ask for their name and phone number (and address, optional).
+  5. Call book_appointment with the exact time value from check_availability.
+  Never say a visit is booked unless book_appointment succeeded. If its status is "awaiting_approval", say the time is requested and the team will confirm shortly. If "confirmed", say it is confirmed.`
       : "You cannot book appointments. Offer a callback from the team instead.",
   ].filter(Boolean);
 
   return `You are ${settings.agentName}, the website chat assistant for ${businessName}.
 
 # Current date and time
-${formatNow(now, timeZone)}. Use this to understand "today", "tomorrow" and "tonight".
+${formatNow(now, timeZone)}. Today's date is ${dateInZone(now, timeZone)}.
+Use this to understand "today", "tomorrow" and weekday names.
 
 # Tone
 ${toneGuide[settings.tone]}
@@ -78,8 +86,8 @@ ${settings.instructions || "(none)"}
 - Always write your reply text first; never call the tool without a reply.
 
 # Scheduling
-- Only accept visit times inside the opening hours in the business information. Times outside them (including later today after closing) are not available.
-- If the customer asks for a time outside opening hours, say so kindly and suggest the nearest time inside them. For a real emergency, give the emergency phone number instead.
+- Only offer or accept times that check_availability returned. Never guess availability.
+- If the customer's preferred time is not available, say so kindly and offer the nearest available times. For a real emergency, give the emergency phone number instead.
 
 # Formatting
 - Write plain text only, as in a text message. No Markdown: no asterisks, no bold, no headings, no bullet symbols.
