@@ -3,10 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
     "studio": "drizzle-kit studio",
@@ -20,6 +32,7 @@
   "devDependencies": {
     "@types/node": "^26.6.4",
     "drizzle-kit": "^0.31.11",
+    "tsup": "^8.5.1",
     "tsx": "^4.23.15",
     "typescript": "^5"
   }

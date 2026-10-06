@@ -1,5 +1,5 @@
 // Public API of @frontpilot/db.
-export { getDb, type Database } from "./client";
+export { createDatabase, getDb, type Database } from "./client";
 export * from "./schema";
 export { lt } from "drizzle-orm";
 
