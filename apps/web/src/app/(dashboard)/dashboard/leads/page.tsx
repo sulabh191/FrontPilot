@@ -1,10 +1,8 @@
 import { getLeads, LeadsBoard } from "@/features/leads";
 import { PageHeader } from "@/shared/components/page-header";
-import { getCurrentTenant } from "@/shared/lib/tenant";
 
 export default async function LeadsPage() {
-  const tenant = await getCurrentTenant();
-  const leads = await getLeads(tenant.id);
+  const leads = await getLeads();
 
   return (
     <>
