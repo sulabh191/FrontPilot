@@ -236,6 +236,9 @@ importers:
       '@base-ui/react':
         specifier: ^1.8.0
         version: 1.8.0(@types/react@19.3.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@frontpilot/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
       '@frontpilot/db':
         specifier: workspace:*
         version: link:../../packages/db

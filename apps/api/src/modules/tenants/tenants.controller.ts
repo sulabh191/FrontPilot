@@ -1,7 +1,9 @@
 import { Controller, Get } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags, ApiUnauthorizedResponse } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from "@nestjs/swagger";
 import { CurrentTenant } from "../../common/auth/current-tenant.decorator";
+import { openApiSchema } from "../../common/openapi/zod-schema";
 import type { Tenant } from "./tenant.types";
+import { tenantSchema } from "./tenants.schemas";
 
 @ApiTags("account")
 @ApiBearerAuth()
@@ -11,6 +13,7 @@ export class TenantsController {
   // and @CurrentTenant() hands over the business it belongs to.
   @Get()
   @ApiOperation({ summary: "The business the current token belongs to" })
+  @ApiOkResponse({ schema: openApiSchema(tenantSchema, "output") })
   @ApiUnauthorizedResponse({ description: "Missing or invalid token" })
   me(@CurrentTenant() tenant: Tenant) {
     return tenant;

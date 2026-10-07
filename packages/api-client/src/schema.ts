@@ -267,6 +267,20 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                        name: string;
+                        slug: string;
+                        timeZone: string;
+                    };
+                };
+            };
             /** @description Missing or invalid token */
             401: {
                 headers: {

@@ -1,7 +1,5 @@
+import type { z } from "zod";
+import type { tenantSchema } from "./tenants.schemas";
+
 // The authenticated business, attached to the request by the auth guard.
-export type Tenant = {
-  id: string;
-  name: string;
-  slug: string;
-  timeZone: string;
-};
+export type Tenant = z.infer<typeof tenantSchema>;

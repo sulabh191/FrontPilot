@@ -12,6 +12,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
     "@base-ui/react": "^1.8.0",
+    "@frontpilot/api-client": "workspace:*",
     "@frontpilot/db": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
