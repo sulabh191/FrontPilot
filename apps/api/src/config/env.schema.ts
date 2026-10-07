@@ -12,6 +12,10 @@ export const envSchema = z.object({
     .string()
     .default("http://localhost:3000")
     .transform((value) => value.split(",").map((origin) => origin.trim()).filter(Boolean)),
+  // Development-only auth: a shared secret that acts as the demo business's login.
+  // Replaced by a real identity provider later. Leave empty to disable.
+  DEV_AUTH_TOKEN: z.string().min(16, "DEV_AUTH_TOKEN must be at least 16 characters").optional(),
+  DEV_TENANT_SLUG: z.string().default("rapid-plumbing"),
 });
 
 export type Env = z.infer<typeof envSchema>;

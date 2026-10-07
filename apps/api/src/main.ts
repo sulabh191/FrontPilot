@@ -31,7 +31,10 @@ async function bootstrap() {
       .addBearerAuth()
       .build(),
   );
-  SwaggerModule.setup("docs", app, document, { jsonDocumentUrl: "docs-json" });
+  SwaggerModule.setup("docs", app, document, {
+    jsonDocumentUrl: "docs-json",
+    swaggerOptions: { persistAuthorization: true }, // keep the token after a page refresh
+  });
 
   // Close database connections etc. cleanly when the process stops.
   app.enableShutdownHooks();
