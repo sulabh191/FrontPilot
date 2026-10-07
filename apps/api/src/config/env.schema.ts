@@ -16,7 +16,19 @@ export const envSchema = z.object({
   // Replaced by a real identity provider later. Leave empty to disable.
   DEV_AUTH_TOKEN: z.string().min(16, "DEV_AUTH_TOKEN must be at least 16 characters").optional(),
   DEV_TENANT_SLUG: z.string().default("rapid-plumbing"),
-});
+  // SMS: "console" prints texts in the log (development), "twilio" sends real ones.
+  SMS_PROVIDER: z.enum(["console", "twilio"]).default("console"),
+  TWILIO_ACCOUNT_SID: z.string().optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_FROM_NUMBER: z.string().optional(),
+})
+  // Cross-field rule: choosing Twilio requires its three credentials.
+  .superRefine((env, ctx) => {
+    if (env.SMS_PROVIDER !== "twilio") return;
+    for (const key of ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_FROM_NUMBER"] as const) {
+      if (!env[key]) ctx.addIssue({ code: "custom", path: [key], message: "required when SMS_PROVIDER=twilio" });
+    }
+  });
 
 export type Env = z.infer<typeof envSchema>;
 

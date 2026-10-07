@@ -6,6 +6,7 @@ import { validateEnv } from "./config/env.schema";
 import { DatabaseModule } from "./database/database.module";
 import { AgentSettingsModule } from "./modules/agent-settings/agent-settings.module";
 import { AppointmentsModule } from "./modules/appointments/appointments.module";
+import { AvailabilityModule } from "./modules/availability/availability.module";
 import { ConversationsModule } from "./modules/conversations/conversations.module";
 import { HealthModule } from "./modules/health/health.module";
 import { LeadsModule } from "./modules/leads/leads.module";
@@ -28,6 +29,7 @@ import { TenantsModule } from "./modules/tenants/tenants.module";
     LeadsModule,
     ConversationsModule,
     AppointmentsModule,
+    AvailabilityModule,
     AgentSettingsModule,
   ],
 })

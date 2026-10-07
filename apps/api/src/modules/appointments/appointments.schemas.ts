@@ -22,3 +22,10 @@ export const appointmentListSchema = z.object({
   timeZone: z.string().describe("The business's time zone, for displaying startsAt"),
   items: z.array(appointmentSchema),
 });
+
+export const appointmentIdParamSchema = z.uuid();
+
+export const approvalResultSchema = z.object({
+  id: z.uuid(),
+  status: z.enum(["confirmed", "cancelled"]),
+});
