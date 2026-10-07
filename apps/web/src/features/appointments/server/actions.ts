@@ -2,66 +2,38 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { and, appointments, conversations, eq, getDb, leads } from "@frontpilot/db";
-import { notifyBookingUpdate } from "@/features/notifications";
-import { getCurrentTenant } from "@/shared/lib/tenant";
+import { ApiError, unwrap } from "@frontpilot/api-client";
+import { getApi } from "@/shared/lib/api";
 
 export type ApprovalResult = { ok: boolean; message: string };
 
 const idSchema = z.uuid();
 
-// Shared by approve and decline. Only touches an appointment that
-// (1) belongs to the signed-in business and (2) is still awaiting approval.
+// Shared by approve and decline. The API does the real work in one transaction:
+// it updates the appointment, lead and conversation, then texts the customer.
+// It only acts on an appointment that belongs to the token's business and is
+// still awaiting approval, so the browser can't touch anyone else's bookings.
 async function decide(appointmentId: string, decision: "approve" | "decline"): Promise<ApprovalResult> {
+  // Server Actions are public endpoints: anyone can call them with any input.
   const parsed = idSchema.safeParse(appointmentId);
   if (!parsed.success) return { ok: false, message: "Invalid appointment." };
 
-  const tenant = await getCurrentTenant(); // from the session, never from the browser
-  const db = getDb();
+  const path =
+    decision === "approve" ? "/v1/appointments/{id}/approve" : "/v1/appointments/{id}/decline";
 
-  const result = await db.transaction(async (tx) => {
-    // The status condition makes this safe to click twice: the second click changes nothing.
-    const [updated] = await tx
-      .update(appointments)
-      .set({ status: decision === "approve" ? "confirmed" : "cancelled" })
-      .where(
-        and(
-          eq(appointments.id, parsed.data),
-          eq(appointments.tenantId, tenant.id),
-          eq(appointments.status, "awaiting_approval"),
-        ),
-      )
-      .returning({ leadId: appointments.leadId, service: appointments.service });
-    if (!updated) return null;
-
-    if (updated.leadId) {
-      // Declined: the lead still needs a time, so it goes back to Qualified.
-      const [lead] = await tx
-        .update(leads)
-        .set({ stage: decision === "approve" ? "booked" : "qualified", updatedAt: new Date() })
-        .where(and(eq(leads.id, updated.leadId), eq(leads.tenantId, tenant.id)))
-        .returning({ conversationId: leads.conversationId });
-
-      if (lead?.conversationId) {
-        await tx
-          .update(conversations)
-          .set(
-            decision === "approve"
-              ? { status: "resolved_by_owner", summary: `${updated.service}; booking confirmed by owner`, updatedAt: new Date() }
-              : { status: "needs_owner", summary: `${updated.service}; booking declined, follow up with customer`, updatedAt: new Date() },
-          )
-          .where(and(eq(conversations.id, lead.conversationId), eq(conversations.tenantId, tenant.id)));
-      }
+  try {
+    unwrap(await getApi().POST(path, { params: { path: { id: parsed.data } } }));
+  } catch (error) {
+    // Expected outcomes become friendly messages; anything else is a real failure.
+    if (error instanceof ApiError && error.status === 409) {
+      return { ok: false, message: "This booking was already handled." };
     }
-    return updated;
-  });
-
-  if (!result) return { ok: false, message: "This booking was already handled." };
-
-  // After the database change is committed, tell the customer. A failed text is logged, not fatal.
-  await notifyBookingUpdate(parsed.data, decision === "approve" ? "confirmed" : "declined").catch(
-    (error) => console.error("[approval] notification failed", error),
-  );
+    if (error instanceof ApiError && error.status === 404) {
+      return { ok: false, message: "This booking no longer exists." };
+    }
+    console.error("[approval] API call failed", error);
+    return { ok: false, message: "Something went wrong. Please try again." };
+  }
 
   // Every dashboard page shows appointment data, so refresh them all.
   revalidatePath("/dashboard", "layout");
