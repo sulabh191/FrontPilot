@@ -2,6 +2,6 @@ packages:
   - "apps/*"
   - "packages/*"
 allowBuilds:
-  '@scarf/scarf': set this to true or false
+  '@scarf/scarf': false # install-time analytics from swagger-ui; not needed
   esbuild: true
   unrs-resolver: true

@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
     "@frontpilot/db": "workspace:*",
     "@nestjs/common": "^12.1.2",
     "@nestjs/config": "^12.0.1",

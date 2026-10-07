@@ -4,6 +4,7 @@ import { AuthModule } from "./common/auth/auth.module";
 import { RequestContextMiddleware } from "./common/middleware/request-context.middleware";
 import { validateEnv } from "./config/env.schema";
 import { DatabaseModule } from "./database/database.module";
+import { AgentModule } from "./modules/agent/agent.module";
 import { AgentSettingsModule } from "./modules/agent-settings/agent-settings.module";
 import { AppointmentsModule } from "./modules/appointments/appointments.module";
 import { AvailabilityModule } from "./modules/availability/availability.module";
@@ -31,6 +32,7 @@ import { TenantsModule } from "./modules/tenants/tenants.module";
     AppointmentsModule,
     AvailabilityModule,
     AgentSettingsModule,
+    AgentModule,
   ],
 })
 export class AppModule implements NestModule {

@@ -16,6 +16,9 @@ export const envSchema = z.object({
   // Replaced by a real identity provider later. Leave empty to disable.
   DEV_AUTH_TOKEN: z.string().min(16, "DEV_AUTH_TOKEN must be at least 16 characters").optional(),
   DEV_TENANT_SLUG: z.string().default("rapid-plumbing"),
+  // Claude. The key is optional so the API can start without it; the agent reports a clear error.
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
+  ANTHROPIC_MODEL: z.string().default("claude-haiku-4-5-20251001"),
   // SMS: "console" prints texts in the log (development), "twilio" sends real ones.
   SMS_PROVIDER: z.enum(["console", "twilio"]).default("console"),
   TWILIO_ACCOUNT_SID: z.string().optional(),
