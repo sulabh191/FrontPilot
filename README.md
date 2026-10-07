@@ -101,13 +101,38 @@ common/
   filters/                  one JSON error format for every error
   pipes/                    Zod validation for request input
   openapi/                  Zod → OpenAPI schemas for the docs
+  time/                     time-zone helpers (UTC ↔ business local time)
+  auth/                     global AuthGuard, TokenVerifier interface, @CurrentTenant(), @Public()
 modules/
-  health/                   service + database status
-  (next) tenants, leads, conversations, appointments, overview,
-         agent-settings, availability, notifications, agent, chat
+  health/                   service + database status (public)
+  tenants/                  tenant lookup, GET /v1/me
+  overview/  leads/  conversations/  appointments/  agent-settings/
+  availability/             free slots from opening hours, bookings and time zones
+  notifications/            SmsProvider interface; console or Twilio chosen by config
+  (next) agent/  chat/      tool-calling agent, public streaming chat
 ```
 
 Each feature module follows **controller → service → repository**: controllers handle HTTP only, services hold business logic, repositories hold queries. Cross-cutting concerns (auth, validation, errors, logging) are applied once, through guards, pipes, filters and middleware, instead of in every handler.
+
+### API endpoints (v1)
+
+All endpoints except `/health` require `Authorization: Bearer <token>`; the business is taken from the token, never from the request. Interactive docs: `http://localhost:4000/docs`.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/health` | Service and database status (public) |
+| GET | `/v1/me` | The business the token belongs to |
+| GET | `/v1/overview` | Last 7 days: conversations, AI resolution rate, leads, bookings; items needing attention; upcoming visits |
+| GET | `/v1/leads?stage=` | Leads, newest first |
+| GET | `/v1/conversations?status=&limit=` | Conversations, those needing the owner first |
+| GET | `/v1/conversations/:id` | One conversation with all messages |
+| GET | `/v1/appointments?status=&from=` | Appointments, soonest first (UTC + business time zone) |
+| POST | `/v1/appointments/:id/approve` | Confirm a pending booking; texts the customer if they consented |
+| POST | `/v1/appointments/:id/decline` | Decline a pending booking; frees the slot |
+| GET | `/v1/availability?date=` | Free slots on a day |
+| GET / PUT | `/v1/agent-settings` | Read / replace the agent's configuration |
+
+**Conventions:** responses use codes (`needs_owner`) and ISO-8601 UTC timestamps; clients format them. Errors share one shape: `{ "error": { statusCode, code, message, details?, requestId } }`. 400 = validation, 401 = auth, 404 = not found for this business, 409 = state conflict (e.g. already approved).
 
 ### Web structure (`apps/web/src`)
 
@@ -128,6 +153,8 @@ Each feature exposes a public `index.ts`. As features move to the API, their `se
 - **Multi-tenant from day one.** Every table has `tenant_id`; every query takes a tenant; IDs from clients are always checked against the tenant (prevents IDOR).
 - **Secure and consistent by default.** Validated config at startup; Zod validation on every input; one error format with a request ID; CORS allow-list; a global auth guard (endpoints opt out explicitly).
 - **Dependency injection for everything external.** Database, LLM and SMS providers are injected, so tests use fakes and providers are swapped by configuration.
+- **Auth behind an interface.** The global guard depends on a `TokenVerifier` interface; the development token verifier can be replaced by a real identity provider without touching controllers. Secrets are compared in constant time.
+- **Meaningful HTTP semantics.** 404 for resources outside the caller's business, 409 for state conflicts, 400 with per-field details for validation.
 - **Server-owned chat history.** The widget sends only the new message; history is loaded from the database, so a client cannot inject fake past messages.
 - **Streaming with a typed event protocol.** NDJSON events (`conversation`, `text`, `suggestions`, `error`) defined once with Zod and shared by server and widget.
 - **The prompt guides, the code enforces.** The model can request a booking; code checks availability, re-validates the slot and writes the data in a transaction.
@@ -161,7 +188,7 @@ pnpm install
 
 # 2. Configure environment (each app owns its own env file)
 cp apps/web/.env.example apps/web/.env.local   # then set ANTHROPIC_API_KEY
-cp apps/api/.env.example apps/api/.env.local
+cp apps/api/.env.example apps/api/.env.local   # then set DEV_AUTH_TOKEN (openssl rand -hex 24)
 
 # 3. Start Postgres, create tables, load demo data
 pnpm db:up
@@ -207,9 +234,9 @@ Then open:
 
 **Backend API migration (NestJS)**
 - [x] A. Foundation: app, validated config, database module, request IDs and logging, error filter, CORS, Swagger
-- [ ] B. Tenancy and auth: global guard, `@CurrentTenant()`, `@Public()`
-- [ ] C. Read endpoints: leads, conversations, appointments, overview, agent settings
-- [ ] D. Domain actions: notifications module, availability, approve / decline
+- [x] B. Tenancy and auth: global guard, `TokenVerifier` interface, `@CurrentTenant()`, `@Public()`
+- [x] C. Endpoints: overview, leads, conversations (+ detail), appointments, agent settings (GET/PUT)
+- [x] D. Domain actions: notifications (SMS provider via DI), availability, approve / decline
 - [ ] E. Agent and public chat: tools as providers, streaming `/v1/chat`, rate limiting
 - [ ] F. Web app switches to the API via a generated client; database access removed from web
 - [ ] G. Tests (unit + end-to-end) and CI
