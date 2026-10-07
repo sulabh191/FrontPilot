@@ -1,101 +1,34 @@
 import "server-only";
-import {
-  and,
-  appointments,
-  asc,
-  conversations,
-  count,
-  desc,
-  eq,
-  getDb,
-  gte,
-  leads,
-  messages,
-  ne,
-} from "@frontpilot/db";
+import { unwrap } from "@frontpilot/api-client";
+import { getApi } from "@/shared/lib/api";
 import { formatDateParts, formatRelativeTime } from "@/shared/lib/format";
 import type { OverviewData } from "../types";
 
-// Everything the Overview page needs, computed from live data.
-export async function getOverview(tenantId: string): Promise<OverviewData> {
-  const db = getDb();
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const now = new Date();
-
-  // Independent queries run in parallel.
-  const [convoStats, newLeads, booked, attention, upcoming] = await Promise.all([
-    db
-      .select({ status: conversations.status, total: count() })
-      .from(conversations)
-      .where(and(eq(conversations.tenantId, tenantId), gte(conversations.createdAt, weekAgo)))
-      .groupBy(conversations.status),
-    db
-      .select({ total: count() })
-      .from(leads)
-      .where(and(eq(leads.tenantId, tenantId), gte(leads.createdAt, weekAgo))),
-    db
-      .select({ total: count() })
-      .from(appointments)
-      .where(
-        and(
-          eq(appointments.tenantId, tenantId),
-          gte(appointments.createdAt, weekAgo),
-          ne(appointments.status, "cancelled"),
-        ),
-      ),
-    db
-      .select()
-      .from(conversations)
-      .where(and(eq(conversations.tenantId, tenantId), eq(conversations.status, "needs_owner")))
-      .orderBy(desc(conversations.updatedAt))
-      .limit(5),
-    db
-      .select()
-      .from(appointments)
-      .where(
-        and(
-          eq(appointments.tenantId, tenantId),
-          gte(appointments.startsAt, now),
-          ne(appointments.status, "cancelled"),
-        ),
-      )
-      .orderBy(asc(appointments.startsAt))
-      .limit(4),
-  ]);
-
-  const totalConversations = convoStats.reduce((sum, row) => sum + row.total, 0);
-  const resolvedByAi = convoStats.find((row) => row.status === "resolved_by_ai")?.total ?? 0;
-  const aiShare = totalConversations ? Math.round((resolvedByAi / totalConversations) * 100) : 0;
-
-  // Latest customer message for each conversation needing attention.
-  const needsAttention = await Promise.all(
-    attention.map(async (c) => {
-      const [last] = await db
-        .select({ content: messages.content })
-        .from(messages)
-        .where(and(eq(messages.conversationId, c.id), eq(messages.role, "user")))
-        .orderBy(desc(messages.createdAt))
-        .limit(1);
-      return {
-        id: c.id,
-        customer: c.customerName ?? "Website visitor",
-        message: last?.content ?? "",
-        reason: c.summary ?? "Waiting for your reply",
-        receivedAt: formatRelativeTime(c.updatedAt),
-      };
-    }),
+// Everything the Overview page needs, in one API call. The API computes the
+// numbers (last 7 days); this file only turns them into what the UI shows.
+export async function getOverview(): Promise<OverviewData> {
+  const { stats, needsAttention, upcomingAppointments, timeZone } = unwrap(
+    await getApi().GET("/v1/overview"),
   );
 
   return {
     stats: [
-      { label: "Conversations", value: String(totalConversations), trend: "Last 7 days" },
-      { label: "New leads", value: String(newLeads[0]?.total ?? 0), trend: "Last 7 days" },
-      { label: "Appointments booked", value: String(booked[0]?.total ?? 0), trend: "Last 7 days" },
-      { label: "Handled by AI", value: `${aiShare}%`, trend: "No human needed" },
+      { label: "Conversations", value: String(stats.conversations), trend: "Last 7 days" },
+      { label: "New leads", value: String(stats.newLeads), trend: "Last 7 days" },
+      { label: "Appointments booked", value: String(stats.appointmentsBooked), trend: "Last 7 days" },
+      // The API sends a 0–1 rate; percentages are a display decision.
+      { label: "Handled by AI", value: `${Math.round(stats.aiResolutionRate * 100)}%`, trend: "No human needed" },
     ],
-    needsAttention,
-    upcoming: upcoming.map((a) => {
-      const { date, time } = formatDateParts(a.startsAt);
+    needsAttention: needsAttention.map((c) => ({
+      id: c.conversationId,
+      customer: c.customerName ?? "Website visitor",
+      message: c.lastCustomerMessage ?? "",
+      reason: c.summary ?? "Waiting for your reply",
+      receivedAt: formatRelativeTime(new Date(c.updatedAt)),
+    })),
+    upcoming: upcomingAppointments.map((a) => {
+      // Shown on the business's clock, not the server's.
+      const { date, time } = formatDateParts(new Date(a.startsAt), timeZone);
       return {
         id: a.id,
         customer: a.customerName,
