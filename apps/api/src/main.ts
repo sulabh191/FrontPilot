@@ -1,7 +1,9 @@
 import "reflect-metadata";
 import { Logger } from "@nestjs/common";
+import type { CorsOptions } from "@nestjs/common/interfaces/external/cors-options.interface";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
+import type { Request } from "express";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
@@ -14,11 +16,18 @@ async function bootstrap() {
   // Every error, anywhere, becomes the same JSON shape.
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Only these browser origins may call the API (the web app for now; widget sites later).
-  app.enableCors({
-    origin: config.get("CORS_ORIGINS", { infer: true }),
-    credentials: true,
-    exposedHeaders: ["X-Request-Id"],
+  // CORS, decided per request:
+  // - public widget endpoints (/v1/chat, /v1/widget/…) are embedded on businesses' own
+  //   websites, so any origin may call them (no cookies involved);
+  // - everything else only from our own apps (CORS_ORIGINS).
+  const trustedOrigins = config.get("CORS_ORIGINS", { infer: true });
+  app.enableCors((req: Request, callback: (err: Error | null, options: CorsOptions) => void) => {
+    const isPublicWidgetRoute = /^\/v1\/(chat|widget\/)/.test(req.url ?? "");
+    callback(null, {
+      origin: isPublicWidgetRoute ? true : trustedOrigins,
+      credentials: !isPublicWidgetRoute,
+      exposedHeaders: ["X-Request-Id"],
+    });
   });
 
   // OpenAPI spec + interactive docs. The spec at /docs-json generates typed clients.
