@@ -4,10 +4,11 @@ import type { CorsOptions } from "@nestjs/common/interfaces/external/cors-option
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
 import type { Request } from "express";
-import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { SwaggerModule } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
 import type { Env } from "./config/env.schema";
+import { buildOpenApiDocument } from "./openapi";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -30,16 +31,8 @@ async function bootstrap() {
     });
   });
 
-  // OpenAPI spec + interactive docs. The spec at /docs-json generates typed clients.
-  const document = SwaggerModule.createDocument(
-    app,
-    new DocumentBuilder()
-      .setTitle("FrontPilot API")
-      .setDescription("Backend for the FrontPilot web app, iOS app and chat widget.")
-      .setVersion("1.0")
-      .addBearerAuth()
-      .build(),
-  );
+  // OpenAPI spec + interactive docs. The same document is exported to openapi.json.
+  const document = buildOpenApiDocument(app);
   SwaggerModule.setup("docs", app, document, {
     jsonDocumentUrl: "docs-json",
     swaggerOptions: { persistAuthorization: true }, // keep the token after a page refresh

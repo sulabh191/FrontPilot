@@ -6,7 +6,8 @@
     "dev": "nest start --watch",
     "build": "nest build",
     "start": "node dist/main",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "openapi:export": "nest build && node dist/scripts/export-openapi.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
