@@ -1,10 +1,8 @@
 import { AppointmentsTable, ApprovalBanner, getAppointments } from "@/features/appointments";
 import { PageHeader } from "@/shared/components/page-header";
-import { getCurrentTenant } from "@/shared/lib/tenant";
 
 export default async function AppointmentsPage() {
-  const tenant = await getCurrentTenant();
-  const appointments = await getAppointments(tenant.id);
+  const appointments = await getAppointments();
 
   return (
     <>

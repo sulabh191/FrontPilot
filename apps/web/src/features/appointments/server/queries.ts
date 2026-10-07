@@ -1,33 +1,35 @@
 import "server-only";
-import { appointments, asc, eq, getDb, type AppointmentRow } from "@frontpilot/db";
+import { unwrap, type paths } from "@frontpilot/api-client";
+import { getApi } from "@/shared/lib/api";
 import { formatDateParts } from "@/shared/lib/format";
 import type { Appointment, AppointmentStatus } from "../types";
 
-const statusLabel: Record<AppointmentRow["status"], AppointmentStatus> = {
+// One appointment exactly as the API returns it (generated types).
+type ApiAppointment =
+  paths["/v1/appointments"]["get"]["responses"][200]["content"]["application/json"]["items"][number];
+
+const statusLabel: Record<ApiAppointment["status"], AppointmentStatus> = {
   confirmed: "Confirmed",
   awaiting_approval: "Awaiting approval",
   cancelled: "Cancelled",
 };
 
-// A tenant's appointments, soonest first.
-export async function getAppointments(tenantId: string): Promise<Appointment[]> {
-  const rows = await getDb()
-    .select()
-    .from(appointments)
-    .where(eq(appointments.tenantId, tenantId))
-    .orderBy(asc(appointments.startsAt));
+// The business's appointments, soonest first (the API sorts them).
+export async function getAppointments(): Promise<Appointment[]> {
+  const { timeZone, items } = unwrap(await getApi().GET("/v1/appointments"));
 
-  return rows.map((row) => {
-    const { date, time } = formatDateParts(row.startsAt);
+  return items.map((a) => {
+    // startsAt is a UTC instant; show it on the business's clock, not the server's.
+    const { date, time } = formatDateParts(new Date(a.startsAt), timeZone);
     return {
-      id: row.id,
-      customer: row.customerName,
-      service: row.service,
+      id: a.id,
+      customer: a.customerName,
+      service: a.service,
       date,
       time,
-      address: row.address ?? "",
-      bookedBy: row.bookedBy === "ai_agent" ? "AI agent" : "Staff",
-      status: statusLabel[row.status],
+      address: a.address ?? "",
+      bookedBy: a.bookedBy === "ai_agent" ? "AI agent" : "Staff",
+      status: statusLabel[a.status],
     };
   });
 }

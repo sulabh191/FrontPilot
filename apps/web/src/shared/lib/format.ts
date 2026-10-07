@@ -30,9 +30,12 @@ export function formatRelativeTime(date: Date, now = new Date()): string {
 }
 
 // { date: "Mon, Oct 5", time: "9:00 AM" }
-export function formatDateParts(date: Date): { date: string; time: string } {
+// "Wed, Oct 7" and "9:00 AM", shown in the business's time zone (e.g. "America/New_York").
+// Without timeZone the server's own zone is used, which is wrong once the
+// server runs somewhere else (cloud servers usually run on UTC).
+export function formatDateParts(date: Date, timeZone?: string): { date: string; time: string } {
   return {
-    date: date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }),
-    time: date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+    date: date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone }),
+    time: date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone }),
   };
 }
