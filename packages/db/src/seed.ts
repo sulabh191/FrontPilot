@@ -7,7 +7,7 @@ import postgres from "postgres";
 import * as schema from "./schema";
 
 try {
-  process.loadEnvFile("../../apps/web/.env.local");
+  process.loadEnvFile("../../apps/api/.env.local");
 } catch {
   // rely on the environment
 }

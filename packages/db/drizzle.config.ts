@@ -1,9 +1,9 @@
 import { defineConfig } from "drizzle-kit";
 
-// Locally, reuse the web app's private env file so DATABASE_URL lives in one place.
+// Locally, reuse the API's private env file: the API is the only app that talks to the database.
 // In CI or production, DATABASE_URL is set in the environment instead.
 try {
-  process.loadEnvFile("../../apps/web/.env.local");
+  process.loadEnvFile("../../apps/api/.env.local");
 } catch {
   // file not present: rely on the environment
 }
