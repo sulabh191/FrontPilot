@@ -16,7 +16,8 @@
     "db:migrate": "pnpm --filter @frontpilot/db migrate",
     "db:studio": "pnpm --filter @frontpilot/db studio",
     "db:seed": "pnpm --filter @frontpilot/db seed",
-    "api:generate": "pnpm --filter @frontpilot/api openapi:export && pnpm --filter @frontpilot/api-client generate"
+    "api:generate": "pnpm --filter @frontpilot/api openapi:export && pnpm --filter @frontpilot/api-client generate",
+    "test": "turbo run test"
   },
   "devDependencies": {
     "prettier": "^3.9.9",
