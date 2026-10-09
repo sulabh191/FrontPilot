@@ -1,6 +1,6 @@
 import "server-only";
 import type Anthropic from "@anthropic-ai/sdk";
-import { getAgentSettings } from "@/features/agent-setup";
+import { readAgentSettingsForChat } from "@/features/agent-setup";
 import { encodeChatEvent, type ChatEvent } from "@/shared/contracts/chat-events";
 import type { Tenant } from "@/shared/lib/tenant";
 import { getBusinessFacts } from "./knowledge";
@@ -30,7 +30,7 @@ export async function runAgent(
   history: AgentMessage[],
   options: RunAgentOptions,
 ): Promise<ReadableStream<Uint8Array>> {
-  const settings = await getAgentSettings(tenant.id);
+  const settings = await readAgentSettingsForChat(tenant.id);
   const businessFacts = await getBusinessFacts(tenant.id);
   const system = buildSystemPrompt({
     businessName: tenant.name,

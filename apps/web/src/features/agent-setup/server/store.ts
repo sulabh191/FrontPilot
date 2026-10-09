@@ -2,6 +2,10 @@ import "server-only";
 import { agentSettings, eq, getDb } from "@frontpilot/db";
 import type { AgentSettings } from "../schema";
 
+// LEGACY: the chat path (run-agent, widget config) still reads settings straight
+// from the database for the widget's business. The dashboard uses the API instead.
+// This file is deleted in F4, once chat runs on the API.
+
 // Used when a business has not saved any settings yet.
 const defaultSettings: AgentSettings = {
   agentName: "Assistant",
@@ -30,13 +34,4 @@ export async function readSettings(tenantId: string): Promise<AgentSettings> {
     approvalMode: row.approvalMode,
     suggestedQuestions: row.suggestedQuestions,
   };
-}
-
-// Insert or update ("upsert"): one row per tenant.
-export async function writeSettings(tenantId: string, settings: AgentSettings): Promise<void> {
-  const values = { ...settings, updatedAt: new Date() };
-  await getDb()
-    .insert(agentSettings)
-    .values({ tenantId, ...values })
-    .onConflictDoUpdate({ target: agentSettings.tenantId, set: values });
 }

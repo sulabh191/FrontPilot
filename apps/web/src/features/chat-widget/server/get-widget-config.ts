@@ -1,19 +1,16 @@
 import "server-only";
-import { getAgentSettings } from "@/features/agent-setup";
-import { getTenantBySlug } from "@/shared/lib/tenant";
+import { ApiError, unwrap } from "@frontpilot/api-client";
+import { getPublicApi } from "@/shared/lib/api";
 import type { WidgetConfig } from "../types";
 
+// The widget's public settings, from the API's public endpoint.
+// The API picks only safe fields (name, greeting, starter questions);
+// private instructions and tool settings never leave the server.
 export async function getWidgetConfig(slug: string): Promise<WidgetConfig | null> {
-  const tenant = await getTenantBySlug(slug);
-  if (!tenant) return null;
-
-  const settings = await getAgentSettings(tenant.id);
-  // Pick only public fields; instructions and tool settings stay on the server.
-  return {
-    tenantSlug: tenant.slug,
-    businessName: tenant.name,
-    agentName: settings.agentName,
-    greeting: settings.greeting,
-    suggestedQuestions: settings.suggestedQuestions,
-  };
+  try {
+    return unwrap(await getPublicApi().GET("/v1/widget/{slug}", { params: { path: { slug } } }));
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null; // unknown business
+    throw error;
+  }
 }

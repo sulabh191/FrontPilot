@@ -1,9 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentTenant } from "@/shared/lib/tenant";
+import { ApiError, unwrap } from "@frontpilot/api-client";
+import { getApi } from "@/shared/lib/api";
 import { agentSettingsSchema, toolKeys } from "../schema";
-import { writeSettings } from "./store";
 
 export type SaveSettingsState = {
   status: "idle" | "success" | "error";
@@ -11,15 +11,27 @@ export type SaveSettingsState = {
   fieldErrors?: Partial<Record<string, string[]>>;
 };
 
+// The API's validation error details: one entry per invalid field,
+// e.g. { path: "suggestedQuestions.2", message: "Keep each option under 40 characters." }
+type ValidationIssue = { path: string; message: string };
+
+function toFieldErrors(details: unknown): SaveSettingsState["fieldErrors"] {
+  if (!Array.isArray(details)) return {};
+  const errors: Record<string, string[]> = {};
+  for (const issue of details as ValidationIssue[]) {
+    // "suggestedQuestions.2" → "suggestedQuestions": the form shows one error per field.
+    const field = String(issue.path ?? "").split(".")[0] || "form";
+    (errors[field] ??= []).push(issue.message);
+  }
+  return errors;
+}
+
 // Server Action: runs on the server when the form is submitted.
 export async function saveAgentSettings(
   _prev: SaveSettingsState,
   formData: FormData,
 ): Promise<SaveSettingsState> {
-  // The tenant comes from the server session, never from the form,
-  // so one business can't overwrite another's settings.
-  const tenant = await getCurrentTenant();
-
+  // 1. Validate here first: instant, friendly errors without a network call.
   const parsed = agentSettingsSchema.safeParse({
     agentName: formData.get("agentName"),
     greeting: formData.get("greeting"),
@@ -35,15 +47,30 @@ export async function saveAgentSettings(
   });
 
   if (!parsed.success) {
-    const flat = parsed.error.flatten();
     return {
       status: "error",
       message: "Please fix the highlighted fields.",
-      fieldErrors: flat.fieldErrors,
+      fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
 
-  await writeSettings(tenant.id, parsed.data);
+  // 2. Save through the API, which validates again: it never trusts its callers
+  //    (the iOS app will call the same endpoint). The business comes from the token,
+  //    so one business can't overwrite another's settings.
+  try {
+    unwrap(await getApi().PUT("/v1/agent-settings", { body: parsed.data }));
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 400) {
+      return {
+        status: "error",
+        message: "Please fix the highlighted fields.",
+        fieldErrors: toFieldErrors(error.body?.error.details),
+      };
+    }
+    console.error("[agent-settings] save failed", error);
+    return { status: "error", message: "Could not save settings. Please try again." };
+  }
+
   revalidatePath("/dashboard/agent");
   return { status: "success", message: "Settings saved." };
 }

@@ -1,10 +1,8 @@
 import { AgentSettingsForm, getAgentSettings } from "@/features/agent-setup";
 import { PageHeader } from "@/shared/components/page-header";
-import { getCurrentTenant } from "@/shared/lib/tenant";
 
 export default async function AgentSetupPage() {
-  const tenant = await getCurrentTenant();
-  const settings = await getAgentSettings(tenant.id);
+  const settings = await getAgentSettings();
 
   return (
     <>
