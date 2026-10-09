@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MessageCircle, SendHorizontal, X } from "lucide-react";
-import { sendMessage } from "../lib/send-message";
+import { ChatRequestError, sendMessage } from "../lib/send-message";
 import type { ChatMessage, WidgetConfig } from "../types";
 import { MessageBubble } from "./message-bubble";
 import { SuggestedQuestions } from "./suggested-questions";
@@ -92,13 +92,12 @@ export function ChatWidget({ config }: { config: WidgetConfig }) {
     } catch (error) {
       if (controller.signal.aborted) return;
       console.error("[chat-widget]", error);
+      const status = error instanceof ChatRequestError ? error.status : undefined;
+      // 404: the conversation is gone (e.g. the database was reset), so start a fresh one next time.
+      if (status === 404) setConversationId(undefined);
       setMessages((current) => [
         ...current.filter((m) => m.id !== replyId),
-        {
-          id: replyId,
-          role: "assistant",
-          content: "Sorry, I'm having trouble right now. Please try again, or call us directly.",
-        },
+        { id: replyId, role: "assistant", content: errorMessage(status) },
       ]);
     } finally {
       setIsReplying(false);
@@ -181,4 +180,11 @@ export function ChatWidget({ config }: { config: WidgetConfig }) {
       </button>
     </div>
   );
+}
+
+// What the visitor sees when a message can't be answered.
+function errorMessage(status: number | undefined): string {
+  if (status === 429) return "You're sending messages a little fast. Please wait a moment and try again.";
+  if (status === 404) return "Sorry, I lost track of our chat. Please send your message again.";
+  return "Sorry, I'm having trouble right now. Please try again, or call us directly.";
 }
