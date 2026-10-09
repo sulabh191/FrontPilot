@@ -238,6 +238,8 @@ Interactive docs (try requests live): **http://localhost:4000/docs** · raw spec
 
 Postgres 17, schema in `packages/db/src/schema.ts`, versioned SQL migrations in `packages/db/drizzle/` (applied with `pnpm db:migrate`; the e2e tests and CI build their database from the same files).
 
+**Full reference** (every query the API runs as SQL, the schema-change workflow, inspection queries): [`packages/db/README.md`](packages/db/README.md).
+
 ### Tables
 
 | Table | Holds | Key columns |
@@ -524,7 +526,7 @@ apps/
   api/                      NestJS backend (the only app with database and AI access)
   web/                      Next.js frontend
 packages/
-  db/                       Drizzle schema, migrations, seed, client (tsup → ESM + CJS + types)
+  db/                       Drizzle schema, migrations, seed, client (tsup → ESM + CJS + types); see its README
   api-client/               typed client generated from apps/api/openapi.json (openapi-typescript + openapi-fetch)
 ```
 
