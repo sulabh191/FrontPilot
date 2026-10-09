@@ -342,10 +342,58 @@ All variables are validated with Zod at startup; the database tools (`db:migrate
 
 ## Testing guide
 
-### Checks
+### Automated tests
 
 ```bash
-pnpm typecheck                          # all packages (web runs `next typegen` first)
+pnpm test        # unit tests: fast, no database (Vitest)
+pnpm test:e2e    # end-to-end tests: the real API over HTTP against a test database (Postgres must be running: pnpm db:up)
+```
+
+| | Unit tests | End-to-end tests |
+| --- | --- | --- |
+| Where | Next to the code: `apps/api/src/**/*.spec.ts` | `apps/api/test/*.e2e-spec.ts` |
+| What runs | One class, its dependencies replaced by fakes through Nest's DI | The whole API: middleware, guards, pipes, controllers, services, SQL, error filter |
+| Database | None (fake repositories) | A real Postgres database, `frontpilot_test`, rebuilt from the migrations on every run |
+| External services | Faked | Claude and SMS faked; everything else real |
+| Speed | About 1 second in total | A few seconds |
+| Catches | Logic bugs | Wiring bugs: wrong route, missing guard, bad SQL, wrong status code or header |
+
+**Unit tests**
+
+| File | Covers |
+| --- | --- |
+| `common/time/time-zone.spec.ts` | UTC ↔ business time: summer and winter time, both daylight-saving days, half-hour offsets, local date vs UTC date |
+| `modules/availability/availability.service.spec.ts` | Slots from opening hours, 60-minute notice, Saturday hours, booked and overlapping bookings removed, past / closed / beyond-14-days, fully booked, no opening hours (fixed "now", fake repository) |
+| `common/auth/auth.guard.spec.ts` | `@Public()` routes and controllers, missing or malformed header, unknown token, deleted business, the business taken from the token (fake verifier) |
+| `common/auth/dev-token.verifier.spec.ts` | Correct token, wrong token, shorter or longer tokens rejected without crashing, no token configured |
+| `modules/agent/tools/tool-registry.service.spec.ts` | Which tools each business gets; preview mode never offers a tool with side effects |
+| `modules/agent/runner/tool-loop.agent-runner.spec.ts` | The agent loop with a **fake Claude**: streaming, tool round-trip with the server's tenant context, readable multi-step text, suggestions without an extra call, 4-call limit with a fallback reply, crashing tools, tools that weren't offered, abort signal |
+
+**End-to-end tests** (two businesses, A and B, so every test can prove A never reaches B's data)
+
+| File | Covers |
+| --- | --- |
+| `auth-and-tenancy.e2e-spec.ts` | Public health check; 401 in the standard error shape with a matching `X-Request-Id`; caller-supplied request IDs kept; `/v1/me`; another business's conversation → 404; another business's booking can't be approved; 400 with per-field details; malformed IDs → 400, not a database error |
+| `appointments.e2e-spec.ts` | Soonest-first list with time zone; approve (booking, lead, conversation and the real SMS template); approve again → 409 with no second text; decline (lead back to Qualified, slot offered again); booked slots hidden; **approve and decline at the same moment → exactly one 200 and one 409** |
+| `agent-settings.e2e-spec.ts` | Read; invalid settings → 400 for each bad field, nothing saved; a valid save reaches the public widget |
+| `chat.e2e-spec.ts` | Widget config exposes no private instructions; NDJSON event order; messages saved with token counts; **history sent by the browser ignored**; private instructions reach the model only; another business's conversation, invalid input and unknown business rejected before the model is called; 60-message cap; booking through the agent in review mode; a taken slot refused with nothing written |
+| `rate-limit-and-cors.e2e-spec.ts` | Any website may call the chat (no cookies); the dashboard may call private routes; other websites can't; 20 messages a minute, then 429 without calling the model; the limit counts invalid requests too |
+
+**How the end-to-end setup works**
+
+- `test/global-setup.ts` drops and recreates `frontpilot_test`, then applies the same migration files as development and production. It refuses to touch any database whose name doesn't end in `_test`.
+- `test/setup-env.ts` points the API at the test database with test secrets before any test file loads. These override `apps/api/.env.local`, so tests never use real keys or development data.
+- `test/test-app.ts` boots the real `AppModule` with `configureApp()` (the same error format and CORS as production), replacing only Claude and SMS with fakes from `test/fakes.ts`. Tests script the fake model's replies and inspect what was sent to it and which texts were "sent".
+- `test/fixtures.ts` loads known data for each test file. The fake businesses are open every day, so results don't depend on the weekday.
+- Test files run one after another (one shared database); each gets a fresh API instance, so rate-limit counters start at zero.
+- Override the database with `TEST_DATABASE_URL` (CI uses this).
+
+**Writing a test:** add `something.spec.ts` next to `something.ts` (unit) or `test/feature.e2e-spec.ts` (end to end); Vitest finds files by name. Spec files are excluded from the production build.
+
+### Other checks
+
+```bash
+pnpm typecheck                          # all packages, including test files (web runs `next typegen` first)
 pnpm lint
 pnpm --filter @frontpilot/web build     # production build of the web app
 pnpm api:generate                       # re-export the OpenAPI spec and regenerate the typed client
@@ -412,7 +460,8 @@ packages/
 ### API (`apps/api/src`)
 
 ```
-main.ts                     bootstrap: error filter, per-route CORS, Swagger, shutdown hooks
+main.ts                     bootstrap: configureApp(), Swagger, shutdown hooks
+app.setup.ts                configureApp(): error filter + per-route CORS (shared with the e2e tests)
 app.module.ts               config, rate limiting, database, auth, feature modules, request middleware
 openapi.ts                  OpenAPI document (3.1), shared by /docs and the export script
 scripts/export-openapi.ts   writes apps/api/openapi.json
@@ -430,6 +479,21 @@ modules/
   notifications/            SmsProvider interface; console or Twilio chosen by config; templates; phone → E.164
   agent/                    LLM client provider, business facts, system prompt, tools + registry, AgentRunner
   chat/                     public widget config + streaming chat (rate-limited)
+**/*.spec.ts                unit tests, next to the code they test
+```
+
+### API tests (`apps/api/test`)
+
+```
+*.e2e-spec.ts               end-to-end tests (Supertest)
+test-env.ts                 test database URL, test token, trusted origin
+setup-env.ts                applies the test settings before each test file
+global-setup.ts             rebuilds frontpilot_test from the migrations, once per run
+fixtures.ts                 known data: businesses A and B, bookings, leads, chats
+fakes.ts                    fake Claude (scripted, streaming) and fake SMS (records texts)
+test-app.ts                 boots the real API for tests; postChat() reads the NDJSON stream
+vitest.config.mts           (in apps/api) unit test settings
+vitest.e2e.config.mts       (in apps/api) end-to-end settings
 ```
 
 Each feature module follows **controller → service → repository**: controllers handle HTTP only, services hold business rules, repositories hold queries. Auth, validation, errors and logging are applied once (guards, pipes, filters, middleware) instead of in every handler. External services (database, Claude, SMS, token verification, agent runner) are injected through DI tokens, so they can be swapped by configuration or replaced with fakes in tests.
@@ -472,6 +536,7 @@ Features map API codes to UI labels in one place (`server/queries.ts`); componen
 | Database | Postgres 17 (Docker), Drizzle ORM + Drizzle Kit migrations |
 | Validation | Zod 4 everywhere (config, requests, forms, tool input, stream events) |
 | Messaging | Twilio SMS behind an `SmsProvider` interface; console provider for development |
+| Testing | Vitest (with SWC for Nest's decorator metadata), `@nestjs/testing` (DI overrides), Supertest |
 | Tooling | pnpm workspaces, Turborepo, tsup, Prettier, ESLint |
 
 ### Scripts
@@ -480,6 +545,9 @@ Features map API codes to UI labels in one place (`server/queries.ts`); componen
 | --- | --- |
 | `pnpm dev` | Run web (3000) and API (4000) |
 | `pnpm build` / `pnpm typecheck` / `pnpm lint` | Build, type-check, lint all workspaces |
+| `pnpm test` | Unit tests (all packages that have them) |
+| `pnpm test:e2e` | End-to-end tests against the `frontpilot_test` database |
+| `pnpm --filter @frontpilot/api test:watch` | Unit tests, re-run on every save |
 | `pnpm format` | Format with Prettier |
 | `pnpm api:generate` | Export the OpenAPI spec and regenerate `packages/api-client` |
 | `pnpm db:up` / `pnpm db:down` | Start / stop local Postgres |
@@ -499,7 +567,8 @@ Honest notes on what is not production-ready yet:
 - **Phone numbers appear in plain text in the API log** for SMS; they should be masked.
 - **Business facts** for the agent are hard-coded for the demo business; a knowledge base (RAG) replaces this.
 - **Rate limits are in memory**, per API instance; multiple instances would need a shared store (e.g. Redis).
-- **No automated tests or CI yet.**
+- **No CI yet**: tests run locally; a GitHub Actions pipeline is next.
+- **The web app has no automated tests**: its logic lives in the API; browser tests (e.g. Playwright) could be added.
 
 ---
 
@@ -513,9 +582,10 @@ Honest notes on what is not production-ready yet:
 - [x] Real bookings: availability, time zones, idempotency, approvals, SMS with consent
 - [x] NestJS API serving every client: auth guard, tenant isolation, validation, one error format, request IDs, rate limits, OpenAPI docs
 - [x] Typed API client generated from the OpenAPI spec; web app is a pure frontend
+- [x] Automated tests: unit tests with fakes through DI, end-to-end tests with Supertest against a real test database
 
 **Next**
-- [ ] Tests (unit with fakes via DI, end-to-end with Supertest) and GitHub Actions CI
+- [ ] GitHub Actions CI: type-check, lint, build, unit and end-to-end tests on every push
 - [ ] Hardening: slot uniqueness constraint, PII masking in logs
 - [ ] Knowledge base (RAG): document upload, chunking, embeddings, Qdrant search
 - [ ] Authentication and organizations (one dashboard per business)
