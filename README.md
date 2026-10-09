@@ -15,6 +15,7 @@
 - [How requests flow](#how-requests-flow)
 - [The AI agent](#the-ai-agent)
 - [API reference](#api-reference)
+- [Data model](#data-model)
 - [Security model](#security-model)
 - [Edge cases and how they are handled](#edge-cases-and-how-they-are-handled)
 - [Getting started](#getting-started)
@@ -233,10 +234,77 @@ Interactive docs (try requests live): **http://localhost:4000/docs** · raw spec
 
 ---
 
+## Data model
+
+Postgres 17, schema in `packages/db/src/schema.ts`, versioned SQL migrations in `packages/db/drizzle/` (applied with `pnpm db:migrate`; the e2e tests and CI build their database from the same files).
+
+### Tables
+
+| Table | Holds | Key columns |
+| --- | --- | --- |
+| `tenants` | One row per business | `id` (text), `slug` (unique), `time_zone`, `opening_hours` (JSON per weekday), `appointment_minutes` |
+| `agent_settings` | The agent's configuration (one row per business) | `agent_name`, `greeting`, `tone`, `instructions`, `tools` (JSON), `approval_mode`, `suggested_questions` |
+| `conversations` | Chat threads | `status` (`open` · `needs_owner` · `resolved_by_ai` · `resolved_by_owner`), `customer_name`, `summary` |
+| `messages` | Every chat message | `role`, `content`, `input_tokens`, `output_tokens` |
+| `leads` | CRM records | `stage` (`new` · `qualified` · `booked` · `won` · `lost`), `score`, `phone`, `sms_consent`, `conversation_id` |
+| `appointments` | Bookings | `starts_at` (UTC), `status` (`awaiting_approval` · `confirmed` · `cancelled`), `booked_by`, `lead_id` |
+
+Every table carries `tenant_id` with `ON DELETE CASCADE`. Conversation status ("does the owner need to act?") and appointment status ("is the visit happening?") are separate state machines, updated together in transactions.
+
+### Indexes and constraints
+
+| Index / constraint | Purpose |
+| --- | --- |
+| `tenants.slug` UNIQUE | Look up a business by its public name (widget, auth) |
+| `agent_settings` PRIMARY KEY `tenant_id` | Exactly one settings row per business (enables the upsert) |
+| `conversations (tenant_id, updated_at)` | Dashboard list, newest first |
+| `messages (conversation_id, created_at)` | One chat's history in order |
+| `leads (tenant_id, stage)` | Leads board and stage filter |
+| `appointments (tenant_id, starts_at)` | Appointment list and availability by time range |
+| **`appointments_tenant_slot_unique` UNIQUE `(tenant_id, starts_at) WHERE status <> 'cancelled'`** | **One live booking per business per start time**, enforced by the database even when two chats book at the same instant. Partial, so a declined slot can be booked again. A violation (Postgres `23505`) becomes "That time was just taken" with a full rollback |
+
+### How the API queries it
+
+| Operation | Query pattern |
+| --- | --- |
+| Every read and write | Filtered by `tenant_id` (taken from the token, or from the slug for public chat); a row from another business is "not found" |
+| Conversations list, overview | Batch loads with `IN (…)`: one query for all messages instead of one per chat (no N+1) |
+| Overview stats | `GROUP BY` / `count(*)` in the database; independent queries run in parallel |
+| Save agent settings | `INSERT … ON CONFLICT (tenant_id) DO UPDATE` (atomic upsert) |
+| Book an appointment | Idempotency lookup → availability re-check → one transaction: insert lead, insert appointment, update conversation |
+| Approve / decline | One transaction: conditional `UPDATE appointments … WHERE status = 'awaiting_approval'` (0 rows → 409), then lead and conversation updates |
+| Save a chat message | Transaction: insert message + bump the conversation's `updated_at` |
+
+All values are sent as query parameters by Drizzle, never concatenated into SQL.
+
+### Inspecting the data
+
+`pnpm db:psql` opens a SQL prompt (`\dt` tables, `\d appointments` columns and indexes, `\q` quit); `pnpm db:studio` opens a browser view.
+
+```sql
+-- Bookings waiting for approval, in local time
+SELECT customer_name, service, starts_at AT TIME ZONE 'America/New_York' AS local_time
+  FROM appointments WHERE status = 'awaiting_approval' ORDER BY starts_at;
+
+-- AI token usage per business (cost)
+SELECT tenant_id, count(*) AS replies, sum(input_tokens) AS input, sum(output_tokens) AS output
+  FROM messages WHERE role = 'assistant' GROUP BY tenant_id;
+
+-- Must return no rows: live double bookings
+SELECT tenant_id, starts_at, count(*) FROM appointments
+ WHERE status <> 'cancelled' GROUP BY 1, 2 HAVING count(*) > 1;
+
+-- Applied migrations
+SELECT id, hash, created_at FROM drizzle.__drizzle_migrations ORDER BY id;
+```
+
+---
+
 ## Security model
 
 | Concern | How it's handled |
 | --- | --- |
+| Data integrity | Foreign keys, enums and a partial unique index enforce the rules in the database itself, so they hold even under concurrent requests |
 | Authentication | A global `AuthGuard` protects every route by default; public routes opt out with `@Public()`. Tokens are checked through a `TokenVerifier` interface (development verifier now; a real identity provider plugs in without touching controllers). The secret is compared in constant time (`timingSafeEqual`). |
 | Tenant isolation (IDOR) | The business always comes from the token (`@CurrentTenant()`), never from the request. Every query filters by `tenant_id`; an ID belonging to another business returns 404, not 403, so its existence isn't revealed. |
 | Secrets | Database password and Claude key exist only in `apps/api/.env.local`. The web app holds only `API_TOKEN`, used server-side and blocked from browser bundles by `import "server-only"`. `NEXT_PUBLIC_API_URL` is public by design: it's an address, not a secret. |
