@@ -273,7 +273,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** Format: uuid */
                         id: string;
                         name: string;
                         slug: string;

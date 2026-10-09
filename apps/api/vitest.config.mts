@@ -9,7 +9,8 @@ export default defineConfig({
     environment: "node",
     // Nest's decorators store metadata through this polyfill; load it before any test file.
     setupFiles: ["reflect-metadata"],
-    clearMocks: true,
+    // Reset every fake (calls AND scripted return values) between tests, so no test leaks into the next.
+    mockReset: true,
   },
   // Vitest's default compiler (esbuild) can't emit decorator metadata, which Nest's DI
   // needs to know what to inject. SWC can; it reads the decorator settings from tsconfig.json.
