@@ -1,5 +1,7 @@
 # FrontPilot
 
+[![CI](https://github.com/sulabh191/FrontPilot/actions/workflows/ci.yml/badge.svg)](https://github.com/sulabh191/FrontPilot/actions/workflows/ci.yml)
+
 **No-code AI agents for small businesses.** A business sets up its own AI agent in minutes. The agent chats with website visitors, answers questions from the business's own information, qualifies leads, books real appointments, and keeps everything in a built-in CRM. The owner stays in control through approvals.
 
 > Portfolio project by **Sulabh Agarwal**, built to production standards: a separate NestJS API serving every client, a multi-tenant data model, a tool-calling agent loop with streaming, OpenAPI-generated typed clients, and a modular monorepo.
@@ -567,7 +569,6 @@ Honest notes on what is not production-ready yet:
 - **Phone numbers appear in plain text in the API log** for SMS; they should be masked.
 - **Business facts** for the agent are hard-coded for the demo business; a knowledge base (RAG) replaces this.
 - **Rate limits are in memory**, per API instance; multiple instances would need a shared store (e.g. Redis).
-- **No CI yet**: tests run locally; a GitHub Actions pipeline is next.
 - **The web app has no automated tests**: its logic lives in the API; browser tests (e.g. Playwright) could be added.
 
 ---
@@ -583,10 +584,10 @@ Honest notes on what is not production-ready yet:
 - [x] NestJS API serving every client: auth guard, tenant isolation, validation, one error format, request IDs, rate limits, OpenAPI docs
 - [x] Typed API client generated from the OpenAPI spec; web app is a pure frontend
 - [x] Automated tests: unit tests with fakes through DI, end-to-end tests with Supertest against a real test database
+- [x] GitHub Actions CI: typecheck, lint, build, unit and end-to-end tests (with a Postgres service) on every push and pull request
 
 **Next**
-- [ ] GitHub Actions CI: type-check, lint, build, unit and end-to-end tests on every push
-- [ ] Hardening: slot uniqueness constraint, PII masking in logs
+- [ ] Hardening: slot uniqueness constraint, PII masking in logs, Prettier check in CI
 - [ ] Knowledge base (RAG): document upload, chunking, embeddings, Qdrant search
 - [ ] Authentication and organizations (one dashboard per business)
 - [ ] Deployment: web on Vercel; API, Postgres and Qdrant on managed hosting

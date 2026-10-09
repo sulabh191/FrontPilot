@@ -1,0 +1,80 @@
+# Continuous integration: every push to main and every pull request is checked
+# on a fresh Linux machine. Nothing here needs secrets: Claude and SMS are faked
+# in the tests, and the test database is created inside the CI run.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same branch cancels the older, now-pointless run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# The workflow only reads the code (least privilege).
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Typecheck, lint, build, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # A real Postgres for the end-to-end tests, like `pnpm db:up` locally.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: frontpilot
+          POSTGRES_PASSWORD: frontpilot
+          POSTGRES_DB: frontpilot
+        ports:
+          - 5432:5432
+        # Wait until Postgres accepts connections before running the steps.
+        options: >-
+          --health-cmd "pg_isready -U frontpilot"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # The e2e setup creates this database fresh and applies every migration.
+      TEST_DATABASE_URL: postgres://frontpilot:frontpilot@localhost:5432/frontpilot_test
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      # Uses the exact pnpm version from "packageManager" in package.json.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # --frozen-lockfile: fail instead of silently changing versions, so CI tests
+      # exactly the dependency versions that were committed.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Turbo builds the shared packages first (^build), then checks every workspace.
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build
+        run: pnpm build
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: End-to-end tests
+        run: pnpm test:e2e

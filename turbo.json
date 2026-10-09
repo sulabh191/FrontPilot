@@ -37,7 +37,10 @@
       "dependsOn": [
         "^build"
       ],
-      "cache": false
+      "cache": false,
+      "passThroughEnv": [
+        "TEST_DATABASE_URL"
+      ]
     }
   }
 }
