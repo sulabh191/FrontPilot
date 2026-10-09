@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -7,6 +8,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -137,6 +139,9 @@ export const leads = pgTable(
   (t) => [index("leads_tenant_stage_idx").on(t.tenantId, t.stage)],
 );
 
+// Name of the unique index below; BookingService recognises violations of it.
+export const APPOINTMENT_SLOT_UNIQUE = "appointments_tenant_slot_unique";
+
 export const appointments = pgTable(
   "appointments",
   {
@@ -154,5 +159,14 @@ export const appointments = pgTable(
     reminderSent: boolean("reminder_sent").notNull().default(false),
     createdAt: createdAt(),
   },
-  (t) => [index("appointments_tenant_starts_idx").on(t.tenantId, t.startsAt)],
+  (t) => [
+    index("appointments_tenant_starts_idx").on(t.tenantId, t.startsAt),
+    // The database itself refuses a second live booking for the same business and start time.
+    // Code re-checks availability first, but two chats booking the same slot at the same
+    // instant could both pass that check; this index makes the second insert fail.
+    // "Partial": cancelled bookings don't count, so a declined slot can be booked again.
+    uniqueIndex(APPOINTMENT_SLOT_UNIQUE)
+      .on(t.tenantId, t.startsAt)
+      .where(sql`${t.status} <> 'cancelled'`),
+  ],
 );

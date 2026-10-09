@@ -156,7 +156,7 @@ Everything that can fail with a normal HTTP status (rate limit, bad input, unkno
 | Tool | Side effects | What the server does |
 | --- | --- | --- |
 | `check_availability` | No | Computes free slots from opening hours, existing bookings, minimum notice and the 14-day window, in the business's time zone |
-| `book_appointment` | Yes | Validates input (name, phone 7–15 digits, address, date, time, SMS consent), re-checks the slot, then creates lead + appointment + conversation update in one transaction |
+| `book_appointment` | Yes | Validates input (name, phone 7–15 digits, address, date, time, SMS consent), re-checks the slot, then creates lead + appointment + conversation update in one transaction; a database unique index is the final guard against two simultaneous bookings |
 | `suggest_replies` | No | Display-only: 2–3 tappable replies shown under the message |
 
 Each tool declares `sideEffects`. In **preview mode** (`POST /v1/agent/preview`, used to test prompts) tools with side effects are removed, so testing never creates real bookings.
@@ -254,6 +254,7 @@ Interactive docs (try requests live): **http://localhost:4000/docs** · raw spec
 | Scenario | Behaviour | How to see it |
 | --- | --- | --- |
 | Owner double-clicks Approve | First click confirms; second gets 409 → "This booking was already handled." | Two tabs on Appointments: approve in one, decline in the other without refreshing |
+| Two chats book the same slot at the same instant | Both may pass the code's availability check, but a partial unique index (one live booking per business per start time) makes the database refuse the second; the agent says "That time was just taken" and nothing is written | `test/booking-race.e2e-spec.ts` |
 | Two owners decide at the same moment | The update is conditional on `status = awaiting_approval`; the loser gets 409 | Same as above |
 | Approving another business's booking | 404 (tenant-scoped lookup) | Swagger: approve a random UUID |
 | Malformed appointment ID | Rejected before calling the API → "Invalid appointment." | Call the action with a non-UUID |
@@ -564,7 +565,6 @@ Features map API codes to UI labels in one place (`server/queries.ts`); componen
 
 Honest notes on what is not production-ready yet:
 
-- **Concurrent bookings for the same slot from two different conversations** are re-checked in code but not yet guarded by a database constraint; a partial unique index on `(tenant_id, starts_at)` for non-cancelled appointments would close the race.
 - **Authentication** uses one development token per environment; real sign-in and organizations are planned.
 - **Phone numbers appear in plain text in the API log** for SMS; they should be masked.
 - **Business facts** for the agent are hard-coded for the demo business; a knowledge base (RAG) replaces this.
@@ -587,7 +587,7 @@ Honest notes on what is not production-ready yet:
 - [x] GitHub Actions CI: typecheck, lint, build, unit and end-to-end tests (with a Postgres service) on every push and pull request
 
 **Next**
-- [ ] Hardening: slot uniqueness constraint, PII masking in logs, Prettier check in CI
+- [ ] Hardening: PII masking in logs, Prettier check in CI
 - [ ] Knowledge base (RAG): document upload, chunking, embeddings, Qdrant search
 - [ ] Authentication and organizations (one dashboard per business)
 - [ ] Deployment: web on Vercel; API, Postgres and Qdrant on managed hosting
