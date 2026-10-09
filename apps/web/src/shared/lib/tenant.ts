@@ -1,7 +1,6 @@
 import "server-only";
 import { cache } from "react";
 import { unwrap } from "@frontpilot/api-client";
-import { eq, getDb, tenants } from "@frontpilot/db";
 import { getApi } from "./api";
 
 export type Tenant = {
@@ -18,14 +17,3 @@ export type Tenant = {
 export const getCurrentTenant = cache(async (): Promise<Tenant> => {
   return unwrap(await getApi().GET("/v1/me"));
 });
-
-// Public lookup used by the chat widget, where there is no signed-in user.
-// Still reads the database directly; it moves to GET /v1/widget/:slug in F3.
-export async function getTenantBySlug(slug: string): Promise<Tenant | null> {
-  const [row] = await getDb()
-    .select({ id: tenants.id, name: tenants.name, slug: tenants.slug, timeZone: tenants.timeZone })
-    .from(tenants)
-    .where(eq(tenants.slug, slug))
-    .limit(1);
-  return row ?? null;
-}
