@@ -184,7 +184,8 @@ export function ChatWidget({ config }: { config: WidgetConfig }) {
 
 // What the visitor sees when a message can't be answered.
 function errorMessage(status: number | undefined): string {
-  if (status === 429) return "You're sending messages a little fast. Please wait a moment and try again.";
+  if (status === 429)
+    return "You're sending messages a little fast. Please wait a moment and try again.";
   if (status === 404) return "Sorry, I lost track of our chat. Please send your message again.";
   return "Sorry, I'm having trouble right now. Please try again, or call us directly.";
 }

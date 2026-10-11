@@ -16,7 +16,8 @@ export class DevTokenVerifier implements TokenVerifier {
     const token = config.get("DEV_AUTH_TOKEN", { infer: true });
     this.expected = token ? Buffer.from(token) : null;
     this.tenantSlug = config.get("DEV_TENANT_SLUG", { infer: true });
-    if (!token) this.logger.warn("DEV_AUTH_TOKEN is not set: all protected endpoints will return 401");
+    if (!token)
+      this.logger.warn("DEV_AUTH_TOKEN is not set: all protected endpoints will return 401");
   }
 
   async verify(token: string): Promise<VerifiedIdentity | null> {

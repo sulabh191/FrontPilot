@@ -46,7 +46,9 @@ export class NotificationsService {
 
       const to = toE164(row.phone);
       if (!to) {
-        this.logger.warn(`SMS skipped (invalid phone ${maskPhone(row.phone)}) for appointment ${appointmentId}`);
+        this.logger.warn(
+          `SMS skipped (invalid phone ${maskPhone(row.phone)}) for appointment ${appointmentId}`,
+        );
         return;
       }
 
@@ -56,7 +58,10 @@ export class NotificationsService {
         service: row.service,
         when: formatInZone(row.startsAt, row.timeZone),
       };
-      const body = event === "confirmed" ? smsTemplates.bookingConfirmed(info) : smsTemplates.bookingDeclined(info);
+      const body =
+        event === "confirmed"
+          ? smsTemplates.bookingConfirmed(info)
+          : smsTemplates.bookingDeclined(info);
 
       const result = await this.sms.send({ to, body });
       if (!result.ok) this.logger.error(`SMS via ${this.sms.name} failed: ${result.error}`);

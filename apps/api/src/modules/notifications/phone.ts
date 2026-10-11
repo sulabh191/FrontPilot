@@ -2,7 +2,8 @@
 export function toE164(phone: string, defaultCountryCode = "1"): string | null {
   const trimmed = phone.trim();
   const digits = trimmed.replace(/\D/g, "");
-  if (trimmed.startsWith("+")) return digits.length >= 8 && digits.length <= 15 ? `+${digits}` : null;
+  if (trimmed.startsWith("+"))
+    return digits.length >= 8 && digits.length <= 15 ? `+${digits}` : null;
   if (digits.length === 10) return `+${defaultCountryCode}${digits}`;
   if (digits.length === 11 && digits.startsWith(defaultCountryCode)) return `+${digits}`;
   return null;

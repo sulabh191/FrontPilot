@@ -12,7 +12,6 @@ export const chatEventSchema = z.discriminatedUnion("type", [
 
 export type ChatEvent = z.infer<typeof chatEventSchema>;
 
-
 // What the widget sends: only the new message. The API loads the history itself.
 export const chatRequestSchema = z.object({
   tenantSlug: z.string().min(1).max(64),

@@ -20,7 +20,7 @@ export function ToolToggle({ name, label, description, defaultChecked }: ToolTog
         <label htmlFor={id} className="text-sm font-medium">
           {label}
         </label>
-        <p className="text-muted-foreground text-sm">{description}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <Switch id={id} checked={checked} onCheckedChange={setChecked} />
       {/* The switch is a button, so a hidden input carries its value in the form. */}

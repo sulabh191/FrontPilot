@@ -43,7 +43,9 @@ describe("Rate limiting and CORS (e2e)", () => {
       // Unknown business: each request is a cheap 404 that never reaches the model.
       const statuses: number[] = [];
       for (let i = 0; i < 22; i++) {
-        statuses.push((await postChat(t, { tenantSlug: "no-such-business", message: "hi" })).status);
+        statuses.push(
+          (await postChat(t, { tenantSlug: "no-such-business", message: "hi" })).status,
+        );
       }
 
       expect(statuses.slice(0, 20).every((s) => s === 404)).toBe(true);

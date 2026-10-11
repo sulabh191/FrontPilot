@@ -21,12 +21,17 @@ export class AvailabilityService {
   async getSlots(tenantId: string, date: string, now = new Date()): Promise<AvailabilityResult> {
     const schedule = await this.repo.schedule(tenantId);
     const timeZone = schedule?.timeZone ?? "America/New_York";
-    if (!schedule?.openingHours) return { status: "closed", timeZone, reason: "Online booking is not set up." };
+    if (!schedule?.openingHours)
+      return { status: "closed", timeZone, reason: "Online booking is not set up." };
 
     const today = dateInZone(now, timeZone);
     if (date < today) return { status: "closed", timeZone, reason: "That date is in the past." };
     if (date > addDays(today, MAX_DAYS_AHEAD)) {
-      return { status: "closed", timeZone, reason: `Bookings open up to ${MAX_DAYS_AHEAD} days ahead.` };
+      return {
+        status: "closed",
+        timeZone,
+        reason: `Bookings open up to ${MAX_DAYS_AHEAD} days ahead.`,
+      };
     }
 
     const hours = schedule.openingHours[WEEKDAYS[new Date(`${date}T12:00:00Z`).getUTCDay()]!];
@@ -42,7 +47,11 @@ export class AvailabilityService {
       if (t >= earliest) candidates.push(new Date(t));
     }
 
-    const booked = await this.repo.bookedBetween(tenantId, new Date(opens.getTime() - lengthMs), closes);
+    const booked = await this.repo.bookedBetween(
+      tenantId,
+      new Date(opens.getTime() - lengthMs),
+      closes,
+    );
     const slots = candidates.filter((slot) =>
       booked.every((b) => Math.abs(b.startsAt.getTime() - slot.getTime()) >= lengthMs),
     );

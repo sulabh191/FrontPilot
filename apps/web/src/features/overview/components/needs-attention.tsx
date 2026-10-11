@@ -17,7 +17,7 @@ export function NeedsAttention({ items }: { items: AttentionItem[] }) {
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (
-          <p className="text-muted-foreground text-sm">You&apos;re all caught up.</p>
+          <p className="text-sm text-muted-foreground">You&apos;re all caught up.</p>
         ) : (
           <ul className="divide-y">
             {items.map((item) => (
@@ -27,7 +27,9 @@ export function NeedsAttention({ items }: { items: AttentionItem[] }) {
                 </Avatar>
                 <div className="min-w-0">
                   <p className="text-sm font-medium">{item.customer}</p>
-                  <p className="text-muted-foreground truncate text-sm">&ldquo;{item.message}&rdquo;</p>
+                  <p className="truncate text-sm text-muted-foreground">
+                    &ldquo;{item.message}&rdquo;
+                  </p>
                   <p className="mt-1 text-xs text-amber-600">
                     {item.reason} · {item.receivedAt}
                   </p>

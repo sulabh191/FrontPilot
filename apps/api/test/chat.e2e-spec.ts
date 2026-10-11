@@ -54,8 +54,16 @@ describe("Public widget and streaming chat (e2e)", () => {
       expect(status).toBe(200);
       expect(contentType).toContain("application/x-ndjson");
       expect(events[0]).toEqual({ type: "conversation", conversationId: expect.any(String) });
-      expect(events.filter((e) => e.type === "text").map((e) => e.text).join("")).toBe("Yes, we fix leaks.");
-      expect(events.at(-1)).toEqual({ type: "suggestions", options: ["Book a visit", "How much?"] });
+      expect(
+        events
+          .filter((e) => e.type === "text")
+          .map((e) => e.text)
+          .join(""),
+      ).toBe("Yes, we fix leaks.");
+      expect(events.at(-1)).toEqual({
+        type: "suggestions",
+        options: ["Book a visit", "How much?"],
+      });
     });
 
     it("saves both messages, with token usage on the reply", async () => {
@@ -65,7 +73,11 @@ describe("Public widget and streaming chat (e2e)", () => {
       const conversationId = events[0]!.conversationId as string;
 
       const saved = await t.db
-        .select({ role: messages.role, content: messages.content, outputTokens: messages.outputTokens })
+        .select({
+          role: messages.role,
+          content: messages.content,
+          outputTokens: messages.outputTokens,
+        })
         .from(messages)
         .where(eq(messages.conversationId, conversationId))
         .orderBy(messages.createdAt);
@@ -120,11 +132,16 @@ describe("Public widget and streaming chat (e2e)", () => {
     });
 
     it("404s for an unknown business", async () => {
-      expect((await postChat(t, { tenantSlug: "no-such-business", message: "Hi" })).status).toBe(404);
+      expect((await postChat(t, { tenantSlug: "no-such-business", message: "Hi" })).status).toBe(
+        404,
+      );
     });
 
     it("stops a conversation at 60 messages (429), before calling the model", async () => {
-      const [conversation] = await t.db.insert(conversations).values({ tenantId: A.id }).returning();
+      const [conversation] = await t.db
+        .insert(conversations)
+        .values({ tenantId: A.id })
+        .returning();
       await t.db.insert(messages).values(
         Array.from({ length: 60 }, (_, i) => ({
           tenantId: A.id,
@@ -172,15 +189,23 @@ describe("Public widget and streaming chat (e2e)", () => {
         status: "awaiting_approval",
         bookedBy: "ai_agent",
       });
-      const [lead] = await t.db.select().from(leads).where(eq(leads.conversationId, conversationId));
+      const [lead] = await t.db
+        .select()
+        .from(leads)
+        .where(eq(leads.conversationId, conversationId));
       expect(lead).toMatchObject({ stage: "booked", smsConsent: true, phone: "(413) 555-0199" });
-      const [conversation] = await t.db.select().from(conversations).where(eq(conversations.id, conversationId));
+      const [conversation] = await t.db
+        .select()
+        .from(conversations)
+        .where(eq(conversations.id, conversationId));
       expect(conversation!.status).toBe("needs_owner");
       expect(t.sms.sent).toHaveLength(0); // review mode: the customer is texted when the owner decides
     });
 
     it("refuses an already-taken slot and writes nothing", async () => {
-      const countBefore = (await t.db.select({ n: count() }).from(appointments).where(eq(appointments.tenantId, A.id)))[0]!.n;
+      const countBefore = (
+        await t.db.select({ n: count() }).from(appointments).where(eq(appointments.tenantId, A.id))
+      )[0]!.n;
       t.llm.script(
         { tools: [{ name: "book_appointment", input: booking(daysAhead(2), "10:00") }] }, // held by a fixture
         { text: ["Sorry, 10 AM is taken. How about 11?"] },
@@ -188,9 +213,16 @@ describe("Public widget and streaming chat (e2e)", () => {
 
       await ask("Book me in two days at 10");
 
-      const toolResult = (t.llm.calls[1]!.messages.at(-1)!.content as { is_error?: boolean; content: string }[])[0]!;
-      expect(toolResult).toMatchObject({ is_error: true, content: expect.stringContaining("not available") });
-      const countAfter = (await t.db.select({ n: count() }).from(appointments).where(eq(appointments.tenantId, A.id)))[0]!.n;
+      const toolResult = (
+        t.llm.calls[1]!.messages.at(-1)!.content as { is_error?: boolean; content: string }[]
+      )[0]!;
+      expect(toolResult).toMatchObject({
+        is_error: true,
+        content: expect.stringContaining("not available"),
+      });
+      const countAfter = (
+        await t.db.select({ n: count() }).from(appointments).where(eq(appointments.tenantId, A.id))
+      )[0]!.n;
       expect(countAfter).toBe(countBefore);
     });
   });

@@ -1,5 +1,15 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { and, asc, conversations, count, desc, eq, inArray, messages, type Database } from "@frontpilot/db";
+import {
+  and,
+  asc,
+  conversations,
+  count,
+  desc,
+  eq,
+  inArray,
+  messages,
+  type Database,
+} from "@frontpilot/db";
 import { DATABASE } from "../../database/database.constants";
 import type { ListConversationsQuery } from "./conversations.schemas";
 
@@ -73,7 +83,12 @@ export class ConversationsRepository {
       await tx
         .update(conversations)
         .set({ updatedAt: new Date() })
-        .where(and(eq(conversations.id, message.conversationId), eq(conversations.tenantId, message.tenantId)));
+        .where(
+          and(
+            eq(conversations.id, message.conversationId),
+            eq(conversations.tenantId, message.tenantId),
+          ),
+        );
     });
   }
 

@@ -21,7 +21,12 @@ function modelReply({ text = [], tools = [] }: ModelStep) {
     finalMessage: async () => ({
       content: [
         ...(text.length ? [{ type: "text", text: text.join("") }] : []),
-        ...tools.map((tool, i) => ({ type: "tool_use", id: `call_${i}`, name: tool.name, input: tool.input })),
+        ...tools.map((tool, i) => ({
+          type: "tool_use",
+          id: `call_${i}`,
+          name: tool.name,
+          input: tool.input,
+        })),
       ],
       stop_reason: tools.length ? "tool_use" : "end_turn",
       usage: { input_tokens: 100, output_tokens: 10 },

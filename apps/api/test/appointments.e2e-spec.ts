@@ -13,18 +13,25 @@ describe("Appointments: listing, approvals and availability (e2e)", () => {
     await t.close();
   });
 
-  const slotTimes = (body: { slots: { startsAt: string }[] }) => body.slots.map((slot) => slot.startsAt);
+  const slotTimes = (body: { slots: { startsAt: string }[] }) =>
+    body.slots.map((slot) => slot.startsAt);
 
   const statusOf = async (table: "appointment" | "lead" | "conversation", id: string) => {
     if (table === "appointment") {
-      const [row] = await t.db.select({ s: appointments.status }).from(appointments).where(eq(appointments.id, id));
+      const [row] = await t.db
+        .select({ s: appointments.status })
+        .from(appointments)
+        .where(eq(appointments.id, id));
       return row?.s;
     }
     if (table === "lead") {
       const [row] = await t.db.select({ s: leads.stage }).from(leads).where(eq(leads.id, id));
       return row?.s;
     }
-    const [row] = await t.db.select({ s: conversations.status }).from(conversations).where(eq(conversations.id, id));
+    const [row] = await t.db
+      .select({ s: conversations.status })
+      .from(conversations)
+      .where(eq(conversations.id, id));
     return row?.s;
   };
 
@@ -47,12 +54,17 @@ describe("Appointments: listing, approvals and availability (e2e)", () => {
     expect(await statusOf("lead", leadId)).toBe("booked");
     expect(await statusOf("conversation", conversationId)).toBe("resolved_by_owner");
     expect(t.sms.sent).toEqual([
-      { to: "+14135550123", body: expect.stringContaining("your E2E Plumbing visit (Leaking sink) is confirmed") },
+      {
+        to: "+14135550123",
+        body: expect.stringContaining("your E2E Plumbing visit (Leaking sink) is confirmed"),
+      },
     ]);
   });
 
   it("approving the same booking again is a 409 conflict, with no second text", async () => {
-    const res = await t.asOwner.post(`/v1/appointments/${t.fixtures.approveMe.appointmentId}/approve`).expect(409);
+    const res = await t.asOwner
+      .post(`/v1/appointments/${t.fixtures.approveMe.appointmentId}/approve`)
+      .expect(409);
 
     expect(res.body.error.code).toBe("CONFLICT");
     expect(res.body.error.message).toContain("already handled");

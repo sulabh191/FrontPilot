@@ -11,12 +11,12 @@ export function LeadCard({ lead }: { lead: Lead }) {
           <p className="text-sm font-medium">{lead.name}</p>
           <LeadScoreBadge score={lead.score} />
         </div>
-        <p className="text-muted-foreground text-sm">{lead.service}</p>
-        <div className="text-muted-foreground flex items-center justify-between text-xs">
+        <p className="text-sm text-muted-foreground">{lead.service}</p>
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{lead.source}</span>
-          <span className="text-foreground font-medium">{formatCurrency(lead.estimatedValue)}</span>
+          <span className="font-medium text-foreground">{formatCurrency(lead.estimatedValue)}</span>
         </div>
-        <p className="text-muted-foreground text-xs">{lead.createdAt}</p>
+        <p className="text-xs text-muted-foreground">{lead.createdAt}</p>
       </CardContent>
     </Card>
   );

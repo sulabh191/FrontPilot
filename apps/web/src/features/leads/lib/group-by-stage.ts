@@ -11,4 +11,3 @@ export function groupByStage(leads: Lead[]): Record<LeadStage, Lead[]> {
   }
   return groups;
 }
-

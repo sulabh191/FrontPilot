@@ -35,7 +35,11 @@ describe("Auth, tenant isolation and the error format (e2e)", () => {
   });
 
   it("rejects a wrong token", async () => {
-    const res = await t.api().get("/v1/leads").set("Authorization", "Bearer not-the-token").expect(401);
+    const res = await t
+      .api()
+      .get("/v1/leads")
+      .set("Authorization", "Bearer not-the-token")
+      .expect(401);
     expect(res.body.error.message).toBe("Invalid token");
   });
 
@@ -46,7 +50,12 @@ describe("Auth, tenant isolation and the error format (e2e)", () => {
 
   it("GET /v1/me returns the business the token belongs to", async () => {
     const res = await t.asOwner.get("/v1/me").expect(200);
-    expect(res.body).toEqual({ id: A.id, name: A.name, slug: A.slug, timeZone: "America/New_York" });
+    expect(res.body).toEqual({
+      id: A.id,
+      name: A.name,
+      slug: A.slug,
+      timeZone: "America/New_York",
+    });
   });
 
   it("lists only this business's leads", async () => {
@@ -58,7 +67,9 @@ describe("Auth, tenant isolation and the error format (e2e)", () => {
   });
 
   it("answers 404 (not 403) for another business's conversation, so its existence isn't revealed", async () => {
-    const res = await t.asOwner.get(`/v1/conversations/${t.fixtures.other.conversationId}`).expect(404);
+    const res = await t.asOwner
+      .get(`/v1/conversations/${t.fixtures.other.conversationId}`)
+      .expect(404);
     expect(res.body.error.code).toBe("NOT_FOUND");
   });
 
@@ -66,13 +77,19 @@ describe("Auth, tenant isolation and the error format (e2e)", () => {
     await t.asOwner.post(`/v1/appointments/${t.fixtures.other.appointmentId}/approve`).expect(404);
 
     const res = await t.asOwner.get("/v1/appointments").expect(200);
-    expect(res.body.items.map((a: { id: string }) => a.id)).not.toContain(t.fixtures.other.appointmentId);
+    expect(res.body.items.map((a: { id: string }) => a.id)).not.toContain(
+      t.fixtures.other.appointmentId,
+    );
   });
 
   it("returns 400 with per-field details for an invalid query", async () => {
     const res = await t.asOwner.get("/v1/leads?stage=nope").expect(400);
 
-    expect(res.body.error).toMatchObject({ statusCode: 400, code: "BAD_REQUEST", message: "Validation failed" });
+    expect(res.body.error).toMatchObject({
+      statusCode: 400,
+      code: "BAD_REQUEST",
+      message: "Validation failed",
+    });
     expect(res.body.error.details).toEqual([expect.objectContaining({ path: "stage" })]);
   });
 

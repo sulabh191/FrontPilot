@@ -30,14 +30,14 @@
 
 ## What it does
 
-| For the business owner (dashboard) | For their customers (chat widget) |
-| --- | --- |
+| For the business owner (dashboard)                                                          | For their customers (chat widget)                        |
+| ------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
 | Configure the agent: name, greeting, tone, rules, starter questions, which tools it may use | Chat on the business website through a small chat bubble |
-| Choose whether bookings need approval (review mode) or are confirmed instantly (auto mode) | Tap suggested replies or type freely |
-| Overview of the last 7 days: conversations, AI resolution rate, new leads, bookings | Get accurate answers about services, prices and hours |
-| Leads pipeline: New → Qualified → Booked → Won | Book a visit from real availability |
-| Approve or decline bookings the agent made | Receive SMS updates, only if they agreed to them |
-| Every conversation, with the ones needing the owner at the top | Replies stream in word by word |
+| Choose whether bookings need approval (review mode) or are confirmed instantly (auto mode)  | Tap suggested replies or type freely                     |
+| Overview of the last 7 days: conversations, AI resolution rate, new leads, bookings         | Get accurate answers about services, prices and hours    |
+| Leads pipeline: New → Qualified → Booked → Won                                              | Book a visit from real availability                      |
+| Approve or decline bookings the agent made                                                  | Receive SMS updates, only if they agreed to them         |
+| Every conversation, with the ones needing the owner at the top                              | Replies stream in word by word                           |
 
 A fictional business, **Rapid Plumbing**, is seeded as the demo tenant (time zone America/New_York; open Mon–Fri 7:00–19:00, Sat 8:00–16:00, closed Sunday; 60-minute visits), with its own website at `/demo/rapid-plumbing`.
 
@@ -67,12 +67,12 @@ flowchart TB
     api --> sms
 ```
 
-| Piece | Responsibility | Talks to |
-| --- | --- | --- |
-| `apps/web` (Next.js) | Marketing site, owner dashboard, demo business site, chat widget UI | The API only |
-| `apps/api` (NestJS) | All business logic: data, agent, bookings, availability, SMS, auth, rate limits | Postgres, Claude, SMS provider |
-| `packages/db` | Drizzle schema, migrations, seed, database client | Used by the API only |
-| `packages/api-client` | TypeScript client generated from the API's OpenAPI spec | Used by the web app |
+| Piece                 | Responsibility                                                                  | Talks to                       |
+| --------------------- | ------------------------------------------------------------------------------- | ------------------------------ |
+| `apps/web` (Next.js)  | Marketing site, owner dashboard, demo business site, chat widget UI             | The API only                   |
+| `apps/api` (NestJS)   | All business logic: data, agent, bookings, availability, SMS, auth, rate limits | Postgres, Claude, SMS provider |
+| `packages/db`         | Drizzle schema, migrations, seed, database client                               | Used by the API only           |
+| `packages/api-client` | TypeScript client generated from the API's OpenAPI spec                         | Used by the web app            |
 
 **Contract-first:** the API describes every endpoint with Zod schemas → OpenAPI 3.1 spec (`apps/api/openapi.json`) → generated TypeScript types and client (`packages/api-client`). If the API changes a field, the web app fails to compile instead of breaking at runtime. The same spec can generate the Swift client for iOS.
 
@@ -130,12 +130,12 @@ sequenceDiagram
 
 **Streaming protocol (NDJSON, one JSON object per line):**
 
-| Event | When | Example |
-| --- | --- | --- |
-| `conversation` | Always first | `{"type":"conversation","conversationId":"e89a…"}` |
-| `text` | Many times, as the model writes | `{"type":"text","text":" I'd be happy"}` |
-| `suggestions` | Optional, at the end | `{"type":"suggestions","options":["Leaky faucet","Clogged drain"]}` |
-| `error` | If something fails after streaming started | `{"type":"error","message":"The assistant is unavailable right now."}` |
+| Event          | When                                       | Example                                                                |
+| -------------- | ------------------------------------------ | ---------------------------------------------------------------------- |
+| `conversation` | Always first                               | `{"type":"conversation","conversationId":"e89a…"}`                     |
+| `text`         | Many times, as the model writes            | `{"type":"text","text":" I'd be happy"}`                               |
+| `suggestions`  | Optional, at the end                       | `{"type":"suggestions","options":["Leaky faucet","Clogged drain"]}`    |
+| `error`        | If something fails after streaming started | `{"type":"error","message":"The assistant is unavailable right now."}` |
 
 Everything that can fail with a normal HTTP status (rate limit, bad input, unknown business, missing conversation) is checked **before** the 200 is sent. After that, problems become an `error` event. The widget validates every line with Zod and ignores unknown event types, so new event types can be added safely.
 
@@ -154,15 +154,15 @@ Everything that can fail with a normal HTTP status (rate limit, bad input, unkno
 
 ### Tools
 
-| Tool | Side effects | What the server does |
-| --- | --- | --- |
-| `check_availability` | No | Computes free slots from opening hours, existing bookings, minimum notice and the 14-day window, in the business's time zone |
-| `book_appointment` | Yes | Validates input (name, phone 7–15 digits, address, date, time, SMS consent), re-checks the slot, then creates lead + appointment + conversation update in one transaction; a database unique index is the final guard against two simultaneous bookings |
-| `suggest_replies` | No | Display-only: 2–3 tappable replies shown under the message |
+| Tool                 | Side effects | What the server does                                                                                                                                                                                                                                    |
+| -------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `check_availability` | No           | Computes free slots from opening hours, existing bookings, minimum notice and the 14-day window, in the business's time zone                                                                                                                            |
+| `book_appointment`   | Yes          | Validates input (name, phone 7–15 digits, address, date, time, SMS consent), re-checks the slot, then creates lead + appointment + conversation update in one transaction; a database unique index is the final guard against two simultaneous bookings |
+| `suggest_replies`    | No           | Display-only: 2–3 tappable replies shown under the message                                                                                                                                                                                              |
 
 Each tool declares `sideEffects`. In **preview mode** (`POST /v1/agent/preview`, used to test prompts) tools with side effects are removed, so testing never creates real bookings.
 
-**Guiding principle: the prompt guides, the code enforces.** The model can *ask* for a booking; code decides whether it's allowed. The tenant always comes from the server, never from the model's tool input.
+**Guiding principle: the prompt guides, the code enforces.** The model can _ask_ for a booking; code decides whether it's allowed. The tenant always comes from the server, never from the model's tool input.
 
 ### Prompt rules (behaviour)
 
@@ -177,23 +177,23 @@ Each tool declares `sideEffects`. In **preview mode** (`POST /v1/agent/preview`,
 
 ### Booking rules
 
-| Rule | Value |
-| --- | --- |
-| Slot length | The business's `appointment_minutes` (60 for the demo) |
-| Minimum notice | 60 minutes from now |
-| Booking window | Today up to 14 days ahead |
-| Closed days | From opening hours (`null` = closed) |
-| Review mode | Booking is `awaiting_approval`; the conversation becomes `needs_owner`; no SMS until the owner decides |
-| Auto mode | Booking is `confirmed` immediately; the conversation becomes `resolved_by_ai`; confirmation SMS sent |
+| Rule           | Value                                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------------------ |
+| Slot length    | The business's `appointment_minutes` (60 for the demo)                                                 |
+| Minimum notice | 60 minutes from now                                                                                    |
+| Booking window | Today up to 14 days ahead                                                                              |
+| Closed days    | From opening hours (`null` = closed)                                                                   |
+| Review mode    | Booking is `awaiting_approval`; the conversation becomes `needs_owner`; no SMS until the owner decides |
+| Auto mode      | Booking is `confirmed` immediately; the conversation becomes `resolved_by_ai`; confirmation SMS sent   |
 
 ### Status changes
 
-| Event | Appointment | Lead | Conversation | SMS (if consented) |
-| --- | --- | --- | --- | --- |
-| Booked (review mode) | `awaiting_approval` | `booked` | `needs_owner` | none |
-| Booked (auto mode) | `confirmed` | `booked` | `resolved_by_ai` | confirmation |
-| Owner approves | `confirmed` | `booked` | `resolved_by_owner` | confirmation |
-| Owner declines | `cancelled` (slot freed) | back to `qualified` | `needs_owner` (follow up) | decline notice |
+| Event                | Appointment              | Lead                | Conversation              | SMS (if consented) |
+| -------------------- | ------------------------ | ------------------- | ------------------------- | ------------------ |
+| Booked (review mode) | `awaiting_approval`      | `booked`            | `needs_owner`             | none               |
+| Booked (auto mode)   | `confirmed`              | `booked`            | `resolved_by_ai`          | confirmation       |
+| Owner approves       | `confirmed`              | `booked`            | `resolved_by_owner`       | confirmation       |
+| Owner declines       | `cancelled` (slot freed) | back to `qualified` | `needs_owner` (follow up) | decline notice     |
 
 ---
 
@@ -203,22 +203,22 @@ Interactive docs (try requests live): **http://localhost:4000/docs** · raw spec
 
 ### Endpoints
 
-| Method | Path | Auth | Purpose |
-| --- | --- | --- | --- |
-| GET | `/health` | Public | Service and database status (`ok` / `degraded`) |
-| GET | `/v1/me` | Token | The business the token belongs to (`id`, `name`, `slug`, `timeZone`) |
-| GET | `/v1/overview` | Token | Last 7 days: counts, AI resolution rate (0–1), items needing the owner, upcoming visits, time zone |
-| GET | `/v1/leads?stage=` | Token | Leads, newest first |
-| GET | `/v1/conversations?status=&limit=` | Token | Conversations (limit 1–100, default 50), `needs_owner` first |
-| GET | `/v1/conversations/:id` | Token | One conversation with all messages |
-| GET | `/v1/appointments?status=&from=` | Token | Appointments, soonest first, plus the business time zone |
-| POST | `/v1/appointments/:id/approve` | Token | Confirm a pending booking |
-| POST | `/v1/appointments/:id/decline` | Token | Decline a pending booking, freeing the slot |
-| GET | `/v1/availability?date=YYYY-MM-DD` | Token | Free slots on a day |
-| GET / PUT | `/v1/agent-settings` | Token | Read / replace the agent's configuration (defaults if never saved) |
-| POST | `/v1/agent/preview` | Token | Try the agent without side effects |
-| GET | `/v1/widget/:slug` | Public | Public widget settings: business name, agent name, greeting, starter questions |
-| POST | `/v1/chat` | Public | Send a visitor message; reply streams back as NDJSON |
+| Method    | Path                               | Auth   | Purpose                                                                                            |
+| --------- | ---------------------------------- | ------ | -------------------------------------------------------------------------------------------------- |
+| GET       | `/health`                          | Public | Service and database status (`ok` / `degraded`)                                                    |
+| GET       | `/v1/me`                           | Token  | The business the token belongs to (`id`, `name`, `slug`, `timeZone`)                               |
+| GET       | `/v1/overview`                     | Token  | Last 7 days: counts, AI resolution rate (0–1), items needing the owner, upcoming visits, time zone |
+| GET       | `/v1/leads?stage=`                 | Token  | Leads, newest first                                                                                |
+| GET       | `/v1/conversations?status=&limit=` | Token  | Conversations (limit 1–100, default 50), `needs_owner` first                                       |
+| GET       | `/v1/conversations/:id`            | Token  | One conversation with all messages                                                                 |
+| GET       | `/v1/appointments?status=&from=`   | Token  | Appointments, soonest first, plus the business time zone                                           |
+| POST      | `/v1/appointments/:id/approve`     | Token  | Confirm a pending booking                                                                          |
+| POST      | `/v1/appointments/:id/decline`     | Token  | Decline a pending booking, freeing the slot                                                        |
+| GET       | `/v1/availability?date=YYYY-MM-DD` | Token  | Free slots on a day                                                                                |
+| GET / PUT | `/v1/agent-settings`               | Token  | Read / replace the agent's configuration (defaults if never saved)                                 |
+| POST      | `/v1/agent/preview`                | Token  | Try the agent without side effects                                                                 |
+| GET       | `/v1/widget/:slug`                 | Public | Public widget settings: business name, agent name, greeting, starter questions                     |
+| POST      | `/v1/chat`                         | Public | Send a visitor message; reply streams back as NDJSON                                               |
 
 ### Conventions
 
@@ -226,10 +226,17 @@ Interactive docs (try requests live): **http://localhost:4000/docs** · raw spec
 - **Time-based lists include `timeZone`**, so every client shows times on the business's clock.
 - **One error shape** for every failure:
   ```json
-  { "error": { "statusCode": 409, "code": "CONFLICT", "message": "This booking was already handled (status: confirmed)", "requestId": "3ef81f03-…" } }
+  {
+    "error": {
+      "statusCode": 409,
+      "code": "CONFLICT",
+      "message": "This booking was already handled (status: confirmed)",
+      "requestId": "3ef81f03-…"
+    }
+  }
   ```
   Validation errors add `details: [{ "path": "tone", "message": "…" }]`.
-- **Status codes:** 400 validation · 401 missing/invalid token · 404 not found *for this business* · 409 state conflict · 429 rate limit / conversation too long · 500 unexpected (logged with the request ID, no internals leaked).
+- **Status codes:** 400 validation · 401 missing/invalid token · 404 not found _for this business_ · 409 state conflict · 429 rate limit / conversation too long · 500 unexpected (logged with the request ID, no internals leaked).
 - **Request IDs:** every response has an `X-Request-Id` header (a caller-supplied one is reused if ≤ 100 chars), also printed in the API log line, so a user's error can be traced to one log entry.
 
 ---
@@ -242,40 +249,40 @@ Postgres 17, schema in `packages/db/src/schema.ts`, versioned SQL migrations in 
 
 ### Tables
 
-| Table | Holds | Key columns |
-| --- | --- | --- |
-| `tenants` | One row per business | `id` (text), `slug` (unique), `time_zone`, `opening_hours` (JSON per weekday), `appointment_minutes` |
-| `agent_settings` | The agent's configuration (one row per business) | `agent_name`, `greeting`, `tone`, `instructions`, `tools` (JSON), `approval_mode`, `suggested_questions` |
-| `conversations` | Chat threads | `status` (`open` · `needs_owner` · `resolved_by_ai` · `resolved_by_owner`), `customer_name`, `summary` |
-| `messages` | Every chat message | `role`, `content`, `input_tokens`, `output_tokens` |
-| `leads` | CRM records | `stage` (`new` · `qualified` · `booked` · `won` · `lost`), `score`, `phone`, `sms_consent`, `conversation_id` |
-| `appointments` | Bookings | `starts_at` (UTC), `status` (`awaiting_approval` · `confirmed` · `cancelled`), `booked_by`, `lead_id` |
+| Table            | Holds                                            | Key columns                                                                                                   |
+| ---------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `tenants`        | One row per business                             | `id` (text), `slug` (unique), `time_zone`, `opening_hours` (JSON per weekday), `appointment_minutes`          |
+| `agent_settings` | The agent's configuration (one row per business) | `agent_name`, `greeting`, `tone`, `instructions`, `tools` (JSON), `approval_mode`, `suggested_questions`      |
+| `conversations`  | Chat threads                                     | `status` (`open` · `needs_owner` · `resolved_by_ai` · `resolved_by_owner`), `customer_name`, `summary`        |
+| `messages`       | Every chat message                               | `role`, `content`, `input_tokens`, `output_tokens`                                                            |
+| `leads`          | CRM records                                      | `stage` (`new` · `qualified` · `booked` · `won` · `lost`), `score`, `phone`, `sms_consent`, `conversation_id` |
+| `appointments`   | Bookings                                         | `starts_at` (UTC), `status` (`awaiting_approval` · `confirmed` · `cancelled`), `booked_by`, `lead_id`         |
 
 Every table carries `tenant_id` with `ON DELETE CASCADE`. Conversation status ("does the owner need to act?") and appointment status ("is the visit happening?") are separate state machines, updated together in transactions.
 
 ### Indexes and constraints
 
-| Index / constraint | Purpose |
-| --- | --- |
-| `tenants.slug` UNIQUE | Look up a business by its public name (widget, auth) |
-| `agent_settings` PRIMARY KEY `tenant_id` | Exactly one settings row per business (enables the upsert) |
-| `conversations (tenant_id, updated_at)` | Dashboard list, newest first |
-| `messages (conversation_id, created_at)` | One chat's history in order |
-| `leads (tenant_id, stage)` | Leads board and stage filter |
-| `appointments (tenant_id, starts_at)` | Appointment list and availability by time range |
+| Index / constraint                                                                                | Purpose                                                                                                                                                                                                                                                          |
+| ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tenants.slug` UNIQUE                                                                             | Look up a business by its public name (widget, auth)                                                                                                                                                                                                             |
+| `agent_settings` PRIMARY KEY `tenant_id`                                                          | Exactly one settings row per business (enables the upsert)                                                                                                                                                                                                       |
+| `conversations (tenant_id, updated_at)`                                                           | Dashboard list, newest first                                                                                                                                                                                                                                     |
+| `messages (conversation_id, created_at)`                                                          | One chat's history in order                                                                                                                                                                                                                                      |
+| `leads (tenant_id, stage)`                                                                        | Leads board and stage filter                                                                                                                                                                                                                                     |
+| `appointments (tenant_id, starts_at)`                                                             | Appointment list and availability by time range                                                                                                                                                                                                                  |
 | **`appointments_tenant_slot_unique` UNIQUE `(tenant_id, starts_at) WHERE status <> 'cancelled'`** | **One live booking per business per start time**, enforced by the database even when two chats book at the same instant. Partial, so a declined slot can be booked again. A violation (Postgres `23505`) becomes "That time was just taken" with a full rollback |
 
 ### How the API queries it
 
-| Operation | Query pattern |
-| --- | --- |
-| Every read and write | Filtered by `tenant_id` (taken from the token, or from the slug for public chat); a row from another business is "not found" |
-| Conversations list, overview | Batch loads with `IN (…)`: one query for all messages instead of one per chat (no N+1) |
-| Overview stats | `GROUP BY` / `count(*)` in the database; independent queries run in parallel |
-| Save agent settings | `INSERT … ON CONFLICT (tenant_id) DO UPDATE` (atomic upsert) |
-| Book an appointment | Idempotency lookup → availability re-check → one transaction: insert lead, insert appointment, update conversation |
-| Approve / decline | One transaction: conditional `UPDATE appointments … WHERE status = 'awaiting_approval'` (0 rows → 409), then lead and conversation updates |
-| Save a chat message | Transaction: insert message + bump the conversation's `updated_at` |
+| Operation                    | Query pattern                                                                                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Every read and write         | Filtered by `tenant_id` (taken from the token, or from the slug for public chat); a row from another business is "not found"               |
+| Conversations list, overview | Batch loads with `IN (…)`: one query for all messages instead of one per chat (no N+1)                                                     |
+| Overview stats               | `GROUP BY` / `count(*)` in the database; independent queries run in parallel                                                               |
+| Save agent settings          | `INSERT … ON CONFLICT (tenant_id) DO UPDATE` (atomic upsert)                                                                               |
+| Book an appointment          | Idempotency lookup → availability re-check → one transaction: insert lead, insert appointment, update conversation                         |
+| Approve / decline            | One transaction: conditional `UPDATE appointments … WHERE status = 'awaiting_approval'` (0 rows → 409), then lead and conversation updates |
+| Save a chat message          | Transaction: insert message + bump the conversation's `updated_at`                                                                         |
 
 All values are sent as query parameters by Drizzle, never concatenated into SQL.
 
@@ -304,52 +311,52 @@ SELECT id, hash, created_at FROM drizzle.__drizzle_migrations ORDER BY id;
 
 ## Security model
 
-| Concern | How it's handled |
-| --- | --- |
-| Data integrity | Foreign keys, enums and a partial unique index enforce the rules in the database itself, so they hold even under concurrent requests |
-| Authentication | A global `AuthGuard` protects every route by default; public routes opt out with `@Public()`. Tokens are checked through a `TokenVerifier` interface (development verifier now; a real identity provider plugs in without touching controllers). The secret is compared in constant time (`timingSafeEqual`). |
-| Tenant isolation (IDOR) | The business always comes from the token (`@CurrentTenant()`), never from the request. Every query filters by `tenant_id`; an ID belonging to another business returns 404, not 403, so its existence isn't revealed. |
-| Secrets | Database password and Claude key exist only in `apps/api/.env.local`. The web app holds only `API_TOKEN`, used server-side and blocked from browser bundles by `import "server-only"`. `NEXT_PUBLIC_API_URL` is public by design: it's an address, not a secret. |
-| Input validation | Zod on config (at startup), every request body/query/param, every tool input from the model, and every streamed event the widget reads. Server Actions validate too, because they are public endpoints. |
-| CORS | Public chat routes (`/v1/chat`, `/v1/widget/*`) accept any origin without credentials (they must work on any customer's website). All other routes allow only `CORS_ORIGINS`. |
-| Abuse and cost control | Rate limits per visitor: 20 chat messages/min, 60 widget loads/min. Max 60 messages per conversation. Max 4 model calls and 600 output tokens per message. Aborted requests stop generation (no paying for unread tokens). |
-| Prompt injection via history | The widget sends only the new message; history is loaded from the database, so a visitor can't forge earlier messages. |
-| Private settings | The public widget endpoint returns only safe fields; internal instructions and tool settings never leave the API. |
-| SMS consent | Texts are sent only if the customer agreed; consent is stored per lead; a failed SMS is logged and never breaks a booking. |
-| Personal data in logs | Phone numbers are masked in logs (`+1••••••0123`, `common/logging/mask.ts`); logs travel to other tools and are kept for months |
+| Concern                      | How it's handled                                                                                                                                                                                                                                                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Data integrity               | Foreign keys, enums and a partial unique index enforce the rules in the database itself, so they hold even under concurrent requests                                                                                                                                                                          |
+| Authentication               | A global `AuthGuard` protects every route by default; public routes opt out with `@Public()`. Tokens are checked through a `TokenVerifier` interface (development verifier now; a real identity provider plugs in without touching controllers). The secret is compared in constant time (`timingSafeEqual`). |
+| Tenant isolation (IDOR)      | The business always comes from the token (`@CurrentTenant()`), never from the request. Every query filters by `tenant_id`; an ID belonging to another business returns 404, not 403, so its existence isn't revealed.                                                                                         |
+| Secrets                      | Database password and Claude key exist only in `apps/api/.env.local`. The web app holds only `API_TOKEN`, used server-side and blocked from browser bundles by `import "server-only"`. `NEXT_PUBLIC_API_URL` is public by design: it's an address, not a secret.                                              |
+| Input validation             | Zod on config (at startup), every request body/query/param, every tool input from the model, and every streamed event the widget reads. Server Actions validate too, because they are public endpoints.                                                                                                       |
+| CORS                         | Public chat routes (`/v1/chat`, `/v1/widget/*`) accept any origin without credentials (they must work on any customer's website). All other routes allow only `CORS_ORIGINS`.                                                                                                                                 |
+| Abuse and cost control       | Rate limits per visitor: 20 chat messages/min, 60 widget loads/min. Max 60 messages per conversation. Max 4 model calls and 600 output tokens per message. Aborted requests stop generation (no paying for unread tokens).                                                                                    |
+| Prompt injection via history | The widget sends only the new message; history is loaded from the database, so a visitor can't forge earlier messages.                                                                                                                                                                                        |
+| Private settings             | The public widget endpoint returns only safe fields; internal instructions and tool settings never leave the API.                                                                                                                                                                                             |
+| SMS consent                  | Texts are sent only if the customer agreed; consent is stored per lead; a failed SMS is logged and never breaks a booking.                                                                                                                                                                                    |
+| Personal data in logs        | Phone numbers are masked in logs (`+1••••••0123`, `common/logging/mask.ts`); logs travel to other tools and are kept for months                                                                                                                                                                               |
 
 ---
 
 ## Edge cases and how they are handled
 
-| Scenario | Behaviour | How to see it |
-| --- | --- | --- |
-| Owner double-clicks Approve | First click confirms; second gets 409 → "This booking was already handled." | Two tabs on Appointments: approve in one, decline in the other without refreshing |
-| Two chats book the same slot at the same instant | Both may pass the code's availability check, but a partial unique index (one live booking per business per start time) makes the database refuse the second; the agent says "That time was just taken" and nothing is written | `test/booking-race.e2e-spec.ts` |
-| Two owners decide at the same moment | The update is conditional on `status = awaiting_approval`; the loser gets 409 | Same as above |
-| Approving another business's booking | 404 (tenant-scoped lookup) | Swagger: approve a random UUID |
-| Malformed appointment ID | Rejected before calling the API → "Invalid appointment." | Call the action with a non-UUID |
-| Agent tries to book a taken slot | Booking re-checks availability → tool error → agent offers other times | Book a time, then ask for the same time in a new chat |
-| Same conversation books the same slot twice (retry) | Idempotent: returns the existing booking | Ask the agent to "confirm again" after booking |
-| Booking without an address or with a bad phone | Tool input validation fails → agent asks for the missing detail | Refuse to give an address |
-| Date in the past / > 14 days / closed day / less than 60 min notice | `check_availability` explains why; agent offers alternatives | Ask for Sunday, or for 30 minutes from now |
-| Daylight-saving change | Times computed with the business's IANA time zone, stored in UTC | `GET /v1/availability` on a DST date |
-| Server running in a different time zone | Dates are formatted in the business's zone, not the server's | `TZ=UTC pnpm dev`: times on the dashboard don't shift |
-| Visitor sends > 20 messages/min | 429 → widget: "You're sending messages a little fast…" | curl loop below |
-| Conversation over 60 messages | 429 "This conversation is too long. Please start a new chat." | Long chat or a seeded long conversation |
-| Conversation ID no longer exists (e.g. database reset) | 404 → widget: "I lost track of our chat…" and the next message starts fresh | Run `pnpm db:seed` mid-chat, then send a message |
-| Unknown business slug | Widget config 404 → demo page "not found"; chat 404 | Open `/v1/widget/no-such-business` |
-| Claude fails mid-reply | `error` event → widget shows a friendly message; the failure is logged with the conversation ID | Set an invalid `ANTHROPIC_API_KEY` in the API |
-| Visitor closes the chat mid-reply | Connection close aborts the model call | Close the chat while it's typing; the API log shows no error |
-| Model writes Markdown anyway | Widget strips `**`, `#`, list dashes | Ask the agent to "use bold text" |
-| API is down: dashboard | Friendly "We can't load your dashboard right now" page with **Try again** and an error reference | Stop the API, open `/dashboard` |
-| API is down: demo website | The business site still loads, without the chat bubble | Stop the API, open `/demo/rapid-plumbing` |
-| Wrong or missing dashboard token | 401 "Invalid token" / "Missing bearer token" | Change `API_TOKEN` in `apps/web/.env.local` |
-| Invalid agent settings | Web validates first (instant field errors, no request); the API validates again and its 400 details map onto the form fields | Clear the agent name; or send `"tone":"rude"` in Swagger |
-| Business never saved settings | API returns defaults | Delete the settings row, open Agent setup |
-| SMS provider fails | Logged; the booking or approval still succeeds | Use `SMS_PROVIDER=twilio` with bad credentials |
-| Customer declined texts | No SMS is sent on booking, approval or decline | Answer "no" to the text-updates question |
-| Missing or invalid API config | API refuses to start with a clear message listing the bad settings | Remove `DATABASE_URL` from `apps/api/.env.local` |
+| Scenario                                                            | Behaviour                                                                                                                                                                                                                     | How to see it                                                                     |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Owner double-clicks Approve                                         | First click confirms; second gets 409 → "This booking was already handled."                                                                                                                                                   | Two tabs on Appointments: approve in one, decline in the other without refreshing |
+| Two chats book the same slot at the same instant                    | Both may pass the code's availability check, but a partial unique index (one live booking per business per start time) makes the database refuse the second; the agent says "That time was just taken" and nothing is written | `test/booking-race.e2e-spec.ts`                                                   |
+| Two owners decide at the same moment                                | The update is conditional on `status = awaiting_approval`; the loser gets 409                                                                                                                                                 | Same as above                                                                     |
+| Approving another business's booking                                | 404 (tenant-scoped lookup)                                                                                                                                                                                                    | Swagger: approve a random UUID                                                    |
+| Malformed appointment ID                                            | Rejected before calling the API → "Invalid appointment."                                                                                                                                                                      | Call the action with a non-UUID                                                   |
+| Agent tries to book a taken slot                                    | Booking re-checks availability → tool error → agent offers other times                                                                                                                                                        | Book a time, then ask for the same time in a new chat                             |
+| Same conversation books the same slot twice (retry)                 | Idempotent: returns the existing booking                                                                                                                                                                                      | Ask the agent to "confirm again" after booking                                    |
+| Booking without an address or with a bad phone                      | Tool input validation fails → agent asks for the missing detail                                                                                                                                                               | Refuse to give an address                                                         |
+| Date in the past / > 14 days / closed day / less than 60 min notice | `check_availability` explains why; agent offers alternatives                                                                                                                                                                  | Ask for Sunday, or for 30 minutes from now                                        |
+| Daylight-saving change                                              | Times computed with the business's IANA time zone, stored in UTC                                                                                                                                                              | `GET /v1/availability` on a DST date                                              |
+| Server running in a different time zone                             | Dates are formatted in the business's zone, not the server's                                                                                                                                                                  | `TZ=UTC pnpm dev`: times on the dashboard don't shift                             |
+| Visitor sends > 20 messages/min                                     | 429 → widget: "You're sending messages a little fast…"                                                                                                                                                                        | curl loop below                                                                   |
+| Conversation over 60 messages                                       | 429 "This conversation is too long. Please start a new chat."                                                                                                                                                                 | Long chat or a seeded long conversation                                           |
+| Conversation ID no longer exists (e.g. database reset)              | 404 → widget: "I lost track of our chat…" and the next message starts fresh                                                                                                                                                   | Run `pnpm db:seed` mid-chat, then send a message                                  |
+| Unknown business slug                                               | Widget config 404 → demo page "not found"; chat 404                                                                                                                                                                           | Open `/v1/widget/no-such-business`                                                |
+| Claude fails mid-reply                                              | `error` event → widget shows a friendly message; the failure is logged with the conversation ID                                                                                                                               | Set an invalid `ANTHROPIC_API_KEY` in the API                                     |
+| Visitor closes the chat mid-reply                                   | Connection close aborts the model call                                                                                                                                                                                        | Close the chat while it's typing; the API log shows no error                      |
+| Model writes Markdown anyway                                        | Widget strips `**`, `#`, list dashes                                                                                                                                                                                          | Ask the agent to "use bold text"                                                  |
+| API is down: dashboard                                              | Friendly "We can't load your dashboard right now" page with **Try again** and an error reference                                                                                                                              | Stop the API, open `/dashboard`                                                   |
+| API is down: demo website                                           | The business site still loads, without the chat bubble                                                                                                                                                                        | Stop the API, open `/demo/rapid-plumbing`                                         |
+| Wrong or missing dashboard token                                    | 401 "Invalid token" / "Missing bearer token"                                                                                                                                                                                  | Change `API_TOKEN` in `apps/web/.env.local`                                       |
+| Invalid agent settings                                              | Web validates first (instant field errors, no request); the API validates again and its 400 details map onto the form fields                                                                                                  | Clear the agent name; or send `"tone":"rude"` in Swagger                          |
+| Business never saved settings                                       | API returns defaults                                                                                                                                                                                                          | Delete the settings row, open Agent setup                                         |
+| SMS provider fails                                                  | Logged; the booking or approval still succeeds                                                                                                                                                                                | Use `SMS_PROVIDER=twilio` with bad credentials                                    |
+| Customer declined texts                                             | No SMS is sent on booking, approval or decline                                                                                                                                                                                | Answer "no" to the text-updates question                                          |
+| Missing or invalid API config                                       | API refuses to start with a clear message listing the bad settings                                                                                                                                                            | Remove `DATABASE_URL` from `apps/api/.env.local`                                  |
 
 ---
 
@@ -376,13 +383,13 @@ pnpm db:seed
 pnpm dev
 ```
 
-| URL | What |
-| --- | --- |
-| http://localhost:3000 | Landing page |
-| http://localhost:3000/dashboard | Owner dashboard (demo business) |
-| http://localhost:3000/demo/rapid-plumbing | Demo business website with the chat widget |
-| http://localhost:4000/docs | API documentation (Swagger: click **Authorize**, paste the token) |
-| http://localhost:4000/health | API and database status |
+| URL                                       | What                                                              |
+| ----------------------------------------- | ----------------------------------------------------------------- |
+| http://localhost:3000                     | Landing page                                                      |
+| http://localhost:3000/dashboard           | Owner dashboard (demo business)                                   |
+| http://localhost:3000/demo/rapid-plumbing | Demo business website with the chat widget                        |
+| http://localhost:4000/docs                | API documentation (Swagger: click **Authorize**, paste the token) |
+| http://localhost:4000/health              | API and database status                                           |
 
 ---
 
@@ -390,26 +397,26 @@ pnpm dev
 
 ### `apps/api/.env.local` (the only place with secrets)
 
-| Variable | Required | Default | Purpose |
-| --- | --- | --- | --- |
-| `DATABASE_URL` | Yes | | Postgres connection (local Docker: port 5433) |
-| `PORT` | No | `4000` | API port |
-| `CORS_ORIGINS` | No | `http://localhost:3000` | Comma-separated origins allowed on private routes |
-| `DEV_AUTH_TOKEN` | For the dashboard | | Development login token (16+ characters) |
-| `DEV_TENANT_SLUG` | No | `rapid-plumbing` | Business the development token belongs to |
-| `ANTHROPIC_API_KEY` | For chat | | Claude key |
-| `ANTHROPIC_MODEL` | No | `claude-haiku-4-5-20251001` | Model for the agent |
-| `SMS_PROVIDER` | No | `console` | `console` prints texts in the API log; `twilio` sends real SMS |
-| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` | If `twilio` | | Twilio credentials |
+| Variable                                                        | Required          | Default                     | Purpose                                                        |
+| --------------------------------------------------------------- | ----------------- | --------------------------- | -------------------------------------------------------------- |
+| `DATABASE_URL`                                                  | Yes               |                             | Postgres connection (local Docker: port 5433)                  |
+| `PORT`                                                          | No                | `4000`                      | API port                                                       |
+| `CORS_ORIGINS`                                                  | No                | `http://localhost:3000`     | Comma-separated origins allowed on private routes              |
+| `DEV_AUTH_TOKEN`                                                | For the dashboard |                             | Development login token (16+ characters)                       |
+| `DEV_TENANT_SLUG`                                               | No                | `rapid-plumbing`            | Business the development token belongs to                      |
+| `ANTHROPIC_API_KEY`                                             | For chat          |                             | Claude key                                                     |
+| `ANTHROPIC_MODEL`                                               | No                | `claude-haiku-4-5-20251001` | Model for the agent                                            |
+| `SMS_PROVIDER`                                                  | No                | `console`                   | `console` prints texts in the API log; `twilio` sends real SMS |
+| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` | If `twilio`       |                             | Twilio credentials                                             |
 
 All variables are validated with Zod at startup; the database tools (`db:migrate`, `db:seed`, `db:studio`) read `DATABASE_URL` from this file too.
 
 ### `apps/web/.env.local` (no database, no Claude key)
 
-| Variable | Visible to browser | Purpose |
-| --- | --- | --- |
-| `API_URL` | No | API address for server-side calls (dashboard) |
-| `API_TOKEN` | No | Same value as `DEV_AUTH_TOKEN` |
+| Variable              | Visible to browser  | Purpose                                                                                                                                      |
+| --------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `API_URL`             | No                  | API address for server-side calls (dashboard)                                                                                                |
+| `API_TOKEN`           | No                  | Same value as `DEV_AUTH_TOKEN`                                                                                                               |
 | `NEXT_PUBLIC_API_URL` | **Yes** (by design) | API address the chat widget calls from the browser. Never put a secret in a `NEXT_PUBLIC_` variable; changing it needs a dev-server restart. |
 
 ---
@@ -423,36 +430,36 @@ pnpm test        # unit tests: fast, no database (Vitest)
 pnpm test:e2e    # end-to-end tests: the real API over HTTP against a test database (Postgres must be running: pnpm db:up)
 ```
 
-| | Unit tests | End-to-end tests |
-| --- | --- | --- |
-| Where | Next to the code: `apps/api/src/**/*.spec.ts` | `apps/api/test/*.e2e-spec.ts` |
-| What runs | One class, its dependencies replaced by fakes through Nest's DI | The whole API: middleware, guards, pipes, controllers, services, SQL, error filter |
-| Database | None (fake repositories) | A real Postgres database, `frontpilot_test`, rebuilt from the migrations on every run |
-| External services | Faked | Claude and SMS faked; everything else real |
-| Speed | About 1 second in total | A few seconds |
-| Catches | Logic bugs | Wiring bugs: wrong route, missing guard, bad SQL, wrong status code or header |
+|                   | Unit tests                                                      | End-to-end tests                                                                      |
+| ----------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Where             | Next to the code: `apps/api/src/**/*.spec.ts`                   | `apps/api/test/*.e2e-spec.ts`                                                         |
+| What runs         | One class, its dependencies replaced by fakes through Nest's DI | The whole API: middleware, guards, pipes, controllers, services, SQL, error filter    |
+| Database          | None (fake repositories)                                        | A real Postgres database, `frontpilot_test`, rebuilt from the migrations on every run |
+| External services | Faked                                                           | Claude and SMS faked; everything else real                                            |
+| Speed             | About 1 second in total                                         | A few seconds                                                                         |
+| Catches           | Logic bugs                                                      | Wiring bugs: wrong route, missing guard, bad SQL, wrong status code or header         |
 
 **Unit tests**
 
-| File | Covers |
-| --- | --- |
-| `common/time/time-zone.spec.ts` | UTC ↔ business time: summer and winter time, both daylight-saving days, half-hour offsets, local date vs UTC date |
-| `modules/availability/availability.service.spec.ts` | Slots from opening hours, 60-minute notice, Saturday hours, booked and overlapping bookings removed, past / closed / beyond-14-days, fully booked, no opening hours (fixed "now", fake repository) |
-| `common/auth/auth.guard.spec.ts` | `@Public()` routes and controllers, missing or malformed header, unknown token, deleted business, the business taken from the token (fake verifier) |
-| `common/logging/mask.spec.ts` | Phone masking: US and international formats, only the last 4 digits ever shown, short and missing values |
-| `common/auth/dev-token.verifier.spec.ts` | Correct token, wrong token, shorter or longer tokens rejected without crashing, no token configured |
-| `modules/agent/tools/tool-registry.service.spec.ts` | Which tools each business gets; preview mode never offers a tool with side effects |
+| File                                                  | Covers                                                                                                                                                                                                                                                        |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `common/time/time-zone.spec.ts`                       | UTC ↔ business time: summer and winter time, both daylight-saving days, half-hour offsets, local date vs UTC date                                                                                                                                             |
+| `modules/availability/availability.service.spec.ts`   | Slots from opening hours, 60-minute notice, Saturday hours, booked and overlapping bookings removed, past / closed / beyond-14-days, fully booked, no opening hours (fixed "now", fake repository)                                                            |
+| `common/auth/auth.guard.spec.ts`                      | `@Public()` routes and controllers, missing or malformed header, unknown token, deleted business, the business taken from the token (fake verifier)                                                                                                           |
+| `common/logging/mask.spec.ts`                         | Phone masking: US and international formats, only the last 4 digits ever shown, short and missing values                                                                                                                                                      |
+| `common/auth/dev-token.verifier.spec.ts`              | Correct token, wrong token, shorter or longer tokens rejected without crashing, no token configured                                                                                                                                                           |
+| `modules/agent/tools/tool-registry.service.spec.ts`   | Which tools each business gets; preview mode never offers a tool with side effects                                                                                                                                                                            |
 | `modules/agent/runner/tool-loop.agent-runner.spec.ts` | The agent loop with a **fake Claude**: streaming, tool round-trip with the server's tenant context, readable multi-step text, suggestions without an extra call, 4-call limit with a fallback reply, crashing tools, tools that weren't offered, abort signal |
 
 **End-to-end tests** (two businesses, A and B, so every test can prove A never reaches B's data)
 
-| File | Covers |
-| --- | --- |
-| `auth-and-tenancy.e2e-spec.ts` | Public health check; 401 in the standard error shape with a matching `X-Request-Id`; caller-supplied request IDs kept; `/v1/me`; another business's conversation → 404; another business's booking can't be approved; 400 with per-field details; malformed IDs → 400, not a database error |
-| `appointments.e2e-spec.ts` | Soonest-first list with time zone; approve (booking, lead, conversation and the real SMS template); approve again → 409 with no second text; decline (lead back to Qualified, slot offered again); booked slots hidden; **approve and decline at the same moment → exactly one 200 and one 409** |
-| `agent-settings.e2e-spec.ts` | Read; invalid settings → 400 for each bad field, nothing saved; a valid save reaches the public widget |
-| `chat.e2e-spec.ts` | Widget config exposes no private instructions; NDJSON event order; messages saved with token counts; **history sent by the browser ignored**; private instructions reach the model only; another business's conversation, invalid input and unknown business rejected before the model is called; 60-message cap; booking through the agent in review mode; a taken slot refused with nothing written |
-| `rate-limit-and-cors.e2e-spec.ts` | Any website may call the chat (no cookies); the dashboard may call private routes; other websites can't; 20 messages a minute, then 429 without calling the model; the limit counts invalid requests too |
+| File                              | Covers                                                                                                                                                                                                                                                                                                                                                                                                |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth-and-tenancy.e2e-spec.ts`    | Public health check; 401 in the standard error shape with a matching `X-Request-Id`; caller-supplied request IDs kept; `/v1/me`; another business's conversation → 404; another business's booking can't be approved; 400 with per-field details; malformed IDs → 400, not a database error                                                                                                           |
+| `appointments.e2e-spec.ts`        | Soonest-first list with time zone; approve (booking, lead, conversation and the real SMS template); approve again → 409 with no second text; decline (lead back to Qualified, slot offered again); booked slots hidden; **approve and decline at the same moment → exactly one 200 and one 409**                                                                                                      |
+| `agent-settings.e2e-spec.ts`      | Read; invalid settings → 400 for each bad field, nothing saved; a valid save reaches the public widget                                                                                                                                                                                                                                                                                                |
+| `chat.e2e-spec.ts`                | Widget config exposes no private instructions; NDJSON event order; messages saved with token counts; **history sent by the browser ignored**; private instructions reach the model only; another business's conversation, invalid input and unknown business rejected before the model is called; 60-message cap; booking through the agent in review mode; a taken slot refused with nothing written |
+| `rate-limit-and-cors.e2e-spec.ts` | Any website may call the chat (no cookies); the dashboard may call private routes; other websites can't; 20 messages a minute, then 429 without calling the model; the limit counts invalid requests too                                                                                                                                                                                              |
 
 **How the end-to-end setup works**
 
@@ -600,36 +607,36 @@ Features map API codes to UI labels in one place (`server/queries.ts`); componen
 
 ## Tech stack
 
-| Area | Choice |
-| --- | --- |
-| Language | TypeScript (strict, `noUncheckedIndexedAccess`) |
-| API | NestJS 12 (modules, DI, guards, pipes, filters, middleware), Express, `@nestjs/throttler` |
+| Area         | Choice                                                                                                            |
+| ------------ | ----------------------------------------------------------------------------------------------------------------- |
+| Language     | TypeScript (strict, `noUncheckedIndexedAccess`)                                                                   |
+| API          | NestJS 12 (modules, DI, guards, pipes, filters, middleware), Express, `@nestjs/throttler`                         |
 | API contract | OpenAPI 3.1 via `@nestjs/swagger`, schemas generated from Zod; clients via `openapi-typescript` + `openapi-fetch` |
-| Web | Next.js 16 (App Router, Server Components, Server Actions, Turbopack), React 19 |
-| UI | Tailwind CSS 4, shadcn/ui (Base UI), lucide icons |
-| AI | Anthropic Claude via `@anthropic-ai/sdk` (tool use, streaming); Claude Haiku 4.5 by default |
-| Database | Postgres 17 (Docker), Drizzle ORM + Drizzle Kit migrations |
-| Validation | Zod 4 everywhere (config, requests, forms, tool input, stream events) |
-| Messaging | Twilio SMS behind an `SmsProvider` interface; console provider for development |
-| Testing | Vitest (with SWC for Nest's decorator metadata), `@nestjs/testing` (DI overrides), Supertest |
-| Tooling | pnpm workspaces, Turborepo, tsup, Prettier, ESLint |
+| Web          | Next.js 16 (App Router, Server Components, Server Actions, Turbopack), React 19                                   |
+| UI           | Tailwind CSS 4, shadcn/ui (Base UI), lucide icons                                                                 |
+| AI           | Anthropic Claude via `@anthropic-ai/sdk` (tool use, streaming); Claude Haiku 4.5 by default                       |
+| Database     | Postgres 17 (Docker), Drizzle ORM + Drizzle Kit migrations                                                        |
+| Validation   | Zod 4 everywhere (config, requests, forms, tool input, stream events)                                             |
+| Messaging    | Twilio SMS behind an `SmsProvider` interface; console provider for development                                    |
+| Testing      | Vitest (with SWC for Nest's decorator metadata), `@nestjs/testing` (DI overrides), Supertest                      |
+| Tooling      | pnpm workspaces, Turborepo, tsup, Prettier, ESLint                                                                |
 
 ### Scripts
 
-| Command | Purpose |
-| --- | --- |
-| `pnpm dev` | Run web (3000) and API (4000) |
-| `pnpm build` / `pnpm typecheck` / `pnpm lint` | Build, type-check, lint all workspaces |
-| `pnpm test` | Unit tests (all packages that have them) |
-| `pnpm test:e2e` | End-to-end tests against the `frontpilot_test` database |
-| `pnpm --filter @frontpilot/api test:watch` | Unit tests, re-run on every save |
-| `pnpm format` / `pnpm format:check` | Format with Prettier / check formatting (CI runs the check) |
-| `pnpm api:generate` | Export the OpenAPI spec and regenerate `packages/api-client` |
-| `pnpm db:up` / `pnpm db:down` | Start / stop local Postgres |
-| `pnpm db:generate` | Create a SQL migration after changing `packages/db/src/schema.ts` |
-| `pnpm db:migrate` | Apply pending migrations |
-| `pnpm db:seed` | Reset the demo business with sample data |
-| `pnpm db:psql` / `pnpm db:studio` | Inspect the database (terminal / browser) |
+| Command                                       | Purpose                                                           |
+| --------------------------------------------- | ----------------------------------------------------------------- |
+| `pnpm dev`                                    | Run web (3000) and API (4000)                                     |
+| `pnpm build` / `pnpm typecheck` / `pnpm lint` | Build, type-check, lint all workspaces                            |
+| `pnpm test`                                   | Unit tests (all packages that have them)                          |
+| `pnpm test:e2e`                               | End-to-end tests against the `frontpilot_test` database           |
+| `pnpm --filter @frontpilot/api test:watch`    | Unit tests, re-run on every save                                  |
+| `pnpm format` / `pnpm format:check`           | Format with Prettier / check formatting (CI runs the check)       |
+| `pnpm api:generate`                           | Export the OpenAPI spec and regenerate `packages/api-client`      |
+| `pnpm db:up` / `pnpm db:down`                 | Start / stop local Postgres                                       |
+| `pnpm db:generate`                            | Create a SQL migration after changing `packages/db/src/schema.ts` |
+| `pnpm db:migrate`                             | Apply pending migrations                                          |
+| `pnpm db:seed`                                | Reset the demo business with sample data                          |
+| `pnpm db:psql` / `pnpm db:studio`             | Inspect the database (terminal / browser)                         |
 
 ---
 
@@ -647,6 +654,7 @@ Honest notes on what is not production-ready yet:
 ## Roadmap
 
 **Done**
+
 - [x] Monorepo, feature architecture, design system
 - [x] Owner dashboard: overview, conversations, leads pipeline, appointments with approvals, agent setup
 - [x] Demo business website with a streaming chat widget and suggested replies
@@ -659,6 +667,7 @@ Honest notes on what is not production-ready yet:
 - [x] Hardening: database-level double-booking guard, phone numbers masked in logs, enforced formatting
 
 **Next**
+
 - [ ] Knowledge base (RAG): document upload, chunking, embeddings, Qdrant search
 - [ ] Authentication and organizations (one dashboard per business)
 - [ ] Deployment: web on Vercel; API, Postgres and Qdrant on managed hosting

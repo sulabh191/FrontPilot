@@ -22,12 +22,18 @@ import { ToolToggle } from "./tool-toggle";
 
 const initialState: SaveSettingsState = { status: "idle" };
 
-const approvalLabels: Record<AgentSettings["approvalMode"], { label: string; description: string }> = {
+const approvalLabels: Record<
+  AgentSettings["approvalMode"],
+  { label: string; description: string }
+> = {
   review: {
     label: "Review mode",
     description: "Bookings and sensitive replies wait for your approval.",
   },
-  auto: { label: "Auto mode", description: "Your agent acts on its own. You can review afterwards." },
+  auto: {
+    label: "Auto mode",
+    description: "Your agent acts on its own. You can review afterwards.",
+  },
 };
 
 export function AgentSettingsForm({ settings }: { settings: AgentSettings }) {
@@ -70,7 +76,7 @@ export function AgentSettingsForm({ settings }: { settings: AgentSettings }) {
                 <label
                   key={tone}
                   className={cn(
-                    "has-checked:border-primary has-checked:bg-primary/5 cursor-pointer rounded-lg border p-3 text-sm",
+                    "cursor-pointer rounded-lg border p-3 text-sm has-checked:border-primary has-checked:bg-primary/5",
                   )}
                 >
                   <input
@@ -81,7 +87,7 @@ export function AgentSettingsForm({ settings }: { settings: AgentSettings }) {
                     className="sr-only"
                   />
                   <span className="font-medium">{toneLabels[tone].label}</span>
-                  <span className="text-muted-foreground mt-1 block text-xs">
+                  <span className="mt-1 block text-xs text-muted-foreground">
                     &ldquo;{toneLabels[tone].example}&rdquo;
                   </span>
                 </label>
@@ -113,8 +119,8 @@ export function AgentSettingsForm({ settings }: { settings: AgentSettings }) {
         <CardHeader>
           <CardTitle>Suggested questions</CardTitle>
           <CardDescription>
-            Shown as buttons when a visitor opens the chat, so they can tap instead of typing. Leave a
-            box empty to show fewer.
+            Shown as buttons when a visitor opens the chat, so they can tap instead of typing. Leave
+            a box empty to show fewer.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2">
@@ -163,7 +169,7 @@ export function AgentSettingsForm({ settings }: { settings: AgentSettings }) {
           {approvalModes.map((mode) => (
             <label
               key={mode}
-              className="has-checked:border-primary has-checked:bg-primary/5 cursor-pointer rounded-lg border p-3 text-sm"
+              className="cursor-pointer rounded-lg border p-3 text-sm has-checked:border-primary has-checked:bg-primary/5"
             >
               <input
                 type="radio"
@@ -173,7 +179,7 @@ export function AgentSettingsForm({ settings }: { settings: AgentSettings }) {
                 className="sr-only"
               />
               <span className="font-medium">{approvalLabels[mode].label}</span>
-              <span className="text-muted-foreground mt-1 block text-xs">
+              <span className="mt-1 block text-xs text-muted-foreground">
                 {approvalLabels[mode].description}
               </span>
             </label>

@@ -2,14 +2,7 @@ import { ToneBadge, type Tone } from "@/shared/components/tone-badge";
 import { getInitials } from "@/shared/lib/format";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Card } from "@/shared/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 import type { Conversation, ConversationStatus } from "../types";
 
 const statusTone: Record<ConversationStatus, Tone> = {
@@ -42,13 +35,13 @@ export function ConversationsTable({ conversations }: { conversations: Conversat
                   </Avatar>
                   <div>
                     <p className="font-medium">{c.customer}</p>
-                    <p className="text-muted-foreground text-xs">{c.messageCount} messages</p>
+                    <p className="text-xs text-muted-foreground">{c.messageCount} messages</p>
                   </div>
                 </div>
               </TableCell>
               <TableCell className="max-w-sm">
                 <p className="truncate">{c.summary}</p>
-                <p className="text-muted-foreground truncate text-xs">
+                <p className="truncate text-xs text-muted-foreground">
                   Last: &ldquo;{c.lastMessage}&rdquo;
                 </p>
               </TableCell>
@@ -56,7 +49,7 @@ export function ConversationsTable({ conversations }: { conversations: Conversat
               <TableCell>
                 <ToneBadge tone={statusTone[c.status]}>{c.status}</ToneBadge>
               </TableCell>
-              <TableCell className="text-muted-foreground pr-4 text-right">{c.updatedAt}</TableCell>
+              <TableCell className="pr-4 text-right text-muted-foreground">{c.updatedAt}</TableCell>
             </TableRow>
           ))}
         </TableBody>

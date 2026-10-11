@@ -12,16 +12,17 @@ export function LeadsBoard({ leads }: { leads: Lead[] }) {
         const stageLeads = columns[stage];
         const total = stageLeads.reduce((sum, lead) => sum + lead.estimatedValue, 0);
         return (
-          <section key={stage} aria-label={`${stage} leads`} className="bg-muted/60 rounded-xl p-3">
+          <section key={stage} aria-label={`${stage} leads`} className="rounded-xl bg-muted/60 p-3">
             <header className="mb-3 flex items-center justify-between px-1">
               <h2 className="text-sm font-semibold">
-                {stage} <span className="text-muted-foreground font-normal">({stageLeads.length})</span>
+                {stage}{" "}
+                <span className="font-normal text-muted-foreground">({stageLeads.length})</span>
               </h2>
-              <span className="text-muted-foreground text-xs">{formatCurrency(total)}</span>
+              <span className="text-xs text-muted-foreground">{formatCurrency(total)}</span>
             </header>
             <div className="space-y-3">
               {stageLeads.length === 0 ? (
-                <p className="text-muted-foreground px-1 py-6 text-center text-xs">No leads</p>
+                <p className="px-1 py-6 text-center text-xs text-muted-foreground">No leads</p>
               ) : (
                 stageLeads.map((lead) => <LeadCard key={lead.id} lead={lead} />)
               )}

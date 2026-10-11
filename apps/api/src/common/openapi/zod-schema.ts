@@ -6,9 +6,9 @@ import { z } from "zod";
 //   @ApiOkResponse({ schema: openApiSchema(leadListSchema, "output") })
 // One schema → runtime validation + API docs + generated client types.
 export function openApiSchema(schema: z.ZodType, io: "input" | "output" = "input"): SchemaObject {
-  const { $schema: _ignored, ...jsonSchema } = z.toJSONSchema(schema, { io, unrepresentable: "any" }) as Record<
-    string,
-    unknown
-  >;
+  const { $schema: _ignored, ...jsonSchema } = z.toJSONSchema(schema, {
+    io,
+    unrepresentable: "any",
+  }) as Record<string, unknown>;
   return jsonSchema as SchemaObject;
 }

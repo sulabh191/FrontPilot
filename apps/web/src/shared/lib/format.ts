@@ -35,7 +35,12 @@ export function formatRelativeTime(date: Date, now = new Date()): string {
 // server runs somewhere else (cloud servers usually run on UTC).
 export function formatDateParts(date: Date, timeZone?: string): { date: string; time: string } {
   return {
-    date: date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone }),
+    date: date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      timeZone,
+    }),
     time: date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone }),
   };
 }

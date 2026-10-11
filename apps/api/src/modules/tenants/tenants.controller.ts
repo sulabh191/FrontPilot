@@ -1,5 +1,11 @@
 import { Controller, Get } from "@nestjs/common";
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from "@nestjs/swagger";
 import { CurrentTenant } from "../../common/auth/current-tenant.decorator";
 import { openApiSchema } from "../../common/openapi/zod-schema";
 import type { Tenant } from "./tenant.types";

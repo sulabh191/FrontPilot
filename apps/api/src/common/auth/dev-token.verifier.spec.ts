@@ -8,7 +8,10 @@ const SECRET = "a-long-development-secret-123";
 
 // A fake ConfigService: just the two settings the verifier reads.
 function verifierWith(token: string | undefined) {
-  const values: Record<string, unknown> = { DEV_AUTH_TOKEN: token, DEV_TENANT_SLUG: "rapid-plumbing" };
+  const values: Record<string, unknown> = {
+    DEV_AUTH_TOKEN: token,
+    DEV_TENANT_SLUG: "rapid-plumbing",
+  };
   const config = { get: (key: string) => values[key] } as unknown as ConfigService<Env, true>;
   return new DevTokenVerifier(config);
 }
@@ -17,7 +20,9 @@ describe("DevTokenVerifier", () => {
   beforeAll(() => Logger.overrideLogger(false));
 
   it("accepts the configured token and names its business", async () => {
-    await expect(verifierWith(SECRET).verify(SECRET)).resolves.toEqual({ tenantSlug: "rapid-plumbing" });
+    await expect(verifierWith(SECRET).verify(SECRET)).resolves.toEqual({
+      tenantSlug: "rapid-plumbing",
+    });
   });
 
   it("rejects a wrong token of the same length", async () => {

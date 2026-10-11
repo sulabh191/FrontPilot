@@ -9,7 +9,12 @@ export class TenantsService {
 
   async findBySlug(slug: string): Promise<Tenant | null> {
     const [row] = await this.db
-      .select({ id: tenants.id, name: tenants.name, slug: tenants.slug, timeZone: tenants.timeZone })
+      .select({
+        id: tenants.id,
+        name: tenants.name,
+        slug: tenants.slug,
+        timeZone: tenants.timeZone,
+      })
       .from(tenants)
       .where(eq(tenants.slug, slug))
       .limit(1);

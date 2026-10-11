@@ -33,13 +33,20 @@ export class BookAppointmentTool implements AgentTool {
       properties: {
         customer_name: { type: "string" },
         phone: { type: "string" },
-        service: { type: "string", description: "Short description of the job, e.g. 'Kitchen sink leak'." },
+        service: {
+          type: "string",
+          description: "Short description of the job, e.g. 'Kitchen sink leak'.",
+        },
         date: { type: "string", description: "YYYY-MM-DD" },
-        time: { type: "string", description: "The exact 'value' from check_availability, HH:MM 24-hour." },
+        time: {
+          type: "string",
+          description: "The exact 'value' from check_availability, HH:MM 24-hour.",
+        },
         address: { type: "string", description: "Street address where the work is needed." },
         sms_consent: {
           type: "boolean",
-          description: "true only if the customer said yes to receiving text updates about this booking.",
+          description:
+            "true only if the customer said yes to receiving text updates about this booking.",
         },
       },
       required: ["customer_name", "phone", "service", "date", "time", "address", "sms_consent"],
@@ -52,7 +59,10 @@ export class BookAppointmentTool implements AgentTool {
     if (!ctx.conversationId) return { content: "Booking is not available here.", isError: true };
     const parsed = input.safeParse(raw);
     if (!parsed.success) {
-      return { content: `Cannot book: ${parsed.error.issues[0]?.message ?? "invalid details"}.`, isError: true };
+      return {
+        content: `Cannot book: ${parsed.error.issues[0]?.message ?? "invalid details"}.`,
+        isError: true,
+      };
     }
     const d = parsed.data;
 

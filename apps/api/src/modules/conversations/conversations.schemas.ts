@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-export const conversationStatuses = ["open", "needs_owner", "resolved_by_ai", "resolved_by_owner"] as const;
+export const conversationStatuses = [
+  "open",
+  "needs_owner",
+  "resolved_by_ai",
+  "resolved_by_owner",
+] as const;
 
 export const listConversationsQuerySchema = z.object({
   status: z.enum(conversationStatuses).optional(),

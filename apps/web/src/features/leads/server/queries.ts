@@ -29,7 +29,10 @@ export async function getLeads(): Promise<Lead[]> {
   const { items } = unwrap(await getApi().GET("/v1/leads"));
 
   return items
-    .filter((lead): lead is ApiLead & { stage: Exclude<ApiLead["stage"], "lost"> } => lead.stage !== "lost")
+    .filter(
+      (lead): lead is ApiLead & { stage: Exclude<ApiLead["stage"], "lost"> } =>
+        lead.stage !== "lost",
+    )
     .map((lead) => ({
       id: lead.id,
       name: lead.name,

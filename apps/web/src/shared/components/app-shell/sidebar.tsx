@@ -13,7 +13,7 @@ export function Sidebar({ businessName }: SidebarProps) {
   const initials = getInitials(businessName);
 
   return (
-    <aside className="bg-sidebar text-sidebar-foreground border-sidebar-border flex w-64 shrink-0 flex-col border-r">
+    <aside className="flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
       <Link href="/" className="px-6 py-5 text-lg font-semibold tracking-tight">
         Front<span className="text-indigo-600">Pilot</span>
       </Link>
@@ -23,7 +23,7 @@ export function Sidebar({ businessName }: SidebarProps) {
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <p className="text-muted-foreground text-xs">Business</p>
+          <p className="text-xs text-muted-foreground">Business</p>
           <p className="truncate text-sm font-medium">{businessName}</p>
         </div>
       </div>
@@ -33,7 +33,7 @@ export function Sidebar({ businessName }: SidebarProps) {
       <Separator />
       <Link
         href="/demo/rapid-plumbing"
-        className="text-muted-foreground hover:text-foreground flex items-center gap-2 px-6 py-4 text-sm"
+        className="flex items-center gap-2 px-6 py-4 text-sm text-muted-foreground hover:text-foreground"
       >
         <ExternalLink className="size-4" />
         View demo website

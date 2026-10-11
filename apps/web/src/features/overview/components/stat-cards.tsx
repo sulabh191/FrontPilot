@@ -7,7 +7,7 @@ export function StatCards({ stats }: { stats: Stat[] }) {
       {stats.map((stat) => (
         <Card key={stat.label}>
           <CardContent>
-            <p className="text-muted-foreground text-sm">{stat.label}</p>
+            <p className="text-sm text-muted-foreground">{stat.label}</p>
             <p className="mt-2 text-3xl font-semibold tracking-tight">{stat.value}</p>
             <p className="mt-1 text-xs text-emerald-600">{stat.trend}</p>
           </CardContent>

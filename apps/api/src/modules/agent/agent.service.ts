@@ -3,7 +3,12 @@ import { AgentSettingsService } from "../agent-settings/agent-settings.service";
 import type { Tenant } from "../tenants/tenant.types";
 import { BusinessFactsService } from "./knowledge/business-facts.service";
 import { buildSystemPrompt } from "./prompt/system-prompt";
-import { AGENT_RUNNER, type AgentEvent, type AgentMessage, type AgentRunner } from "./runner/agent-runner";
+import {
+  AGENT_RUNNER,
+  type AgentEvent,
+  type AgentMessage,
+  type AgentRunner,
+} from "./runner/agent-runner";
 import { ToolRegistry } from "./tools/tool-registry.service";
 
 export type RespondInput = {

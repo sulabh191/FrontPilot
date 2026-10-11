@@ -1,4 +1,11 @@
-import { Bot, CalendarDays, LayoutDashboard, MessagesSquare, Users, type LucideIcon } from "lucide-react";
+import {
+  Bot,
+  CalendarDays,
+  LayoutDashboard,
+  MessagesSquare,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 
 export type NavItem = {
   href: string;

@@ -24,7 +24,9 @@ const channelLabel: Record<ApiConversation["channel"], Channel> = {
 // The business's latest conversations. The API already puts anything
 // needing the owner first, so this only turns API data into UI labels.
 export async function getConversations(): Promise<Conversation[]> {
-  const { items } = unwrap(await getApi().GET("/v1/conversations", { params: { query: { limit: 50 } } }));
+  const { items } = unwrap(
+    await getApi().GET("/v1/conversations", { params: { query: { limit: 50 } } }),
+  );
 
   return items.map((c) => ({
     id: c.id,

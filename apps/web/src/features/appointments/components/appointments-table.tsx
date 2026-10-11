@@ -1,13 +1,6 @@
 import { ToneBadge, type Tone } from "@/shared/components/tone-badge";
 import { Card } from "@/shared/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/shared/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 import type { Appointment, AppointmentStatus } from "../types";
 import { ApprovalActions } from "./approval-actions";
 
@@ -36,11 +29,11 @@ export function AppointmentsTable({ appointments }: { appointments: Appointment[
             <TableRow key={a.id} className={a.status === "Cancelled" ? "opacity-60" : undefined}>
               <TableCell className="pl-4">
                 <p className="font-medium">{a.date}</p>
-                <p className="text-muted-foreground text-xs">{a.time}</p>
+                <p className="text-xs text-muted-foreground">{a.time}</p>
               </TableCell>
               <TableCell>
                 <p className="font-medium">{a.customer}</p>
-                <p className="text-muted-foreground text-xs">{a.address}</p>
+                <p className="text-xs text-muted-foreground">{a.address}</p>
               </TableCell>
               <TableCell>{a.service}</TableCell>
               <TableCell className="text-muted-foreground">{a.bookedBy}</TableCell>

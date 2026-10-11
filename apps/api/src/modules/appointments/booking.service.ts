@@ -1,5 +1,13 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { and, APPOINTMENT_SLOT_UNIQUE, appointments, conversations, eq, leads, type Database } from "@frontpilot/db";
+import {
+  and,
+  APPOINTMENT_SLOT_UNIQUE,
+  appointments,
+  conversations,
+  eq,
+  leads,
+  type Database,
+} from "@frontpilot/db";
 import { zonedTimeToUtc } from "../../common/time/time-zone";
 import { DATABASE } from "../../database/database.constants";
 import { AvailabilityService } from "../availability/availability.service";
@@ -62,8 +70,10 @@ export class BookingService {
     }
 
     // 2. The slot must still be free.
-    const isFree = check.status === "open" && check.slots.some((slot) => slot.getTime() === startsAt.getTime());
-    if (!isFree) return { ok: false, reason: "That time is not available. Check availability again." };
+    const isFree =
+      check.status === "open" && check.slots.some((slot) => slot.getTime() === startsAt.getTime());
+    if (!isFree)
+      return { ok: false, reason: "That time is not available. Check availability again." };
 
     // 3. Lead + appointment + conversation update together, or nothing.
     const status = req.requireApproval ? "awaiting_approval" : "confirmed";
@@ -107,19 +117,23 @@ export class BookingService {
             summary: `${req.service}; booking ${req.requireApproval ? "awaiting approval" : "confirmed"}`,
             updatedAt: new Date(),
           })
-          .where(and(eq(conversations.id, req.conversationId), eq(conversations.tenantId, req.tenantId)));
+          .where(
+            and(eq(conversations.id, req.conversationId), eq(conversations.tenantId, req.tenantId)),
+          );
 
         return appointment!.id;
       });
     } catch (error) {
       // Another chat booked this exact slot between our availability check and our insert.
       // The whole transaction (lead included) was rolled back; nothing was written.
-      if (isSlotTaken(error)) return { ok: false, reason: "That time was just taken. Check availability again." };
+      if (isSlotTaken(error))
+        return { ok: false, reason: "That time was just taken. Check availability again." };
       throw error;
     }
 
     // Auto mode: final now, so tell the customer (never fails the booking).
-    if (status === "confirmed") await this.notifications.notifyBookingUpdate(appointmentId, "confirmed");
+    if (status === "confirmed")
+      await this.notifications.notifyBookingUpdate(appointmentId, "confirmed");
 
     return { ok: true, appointmentId, startsAt, status };
   }

@@ -2,7 +2,7 @@ packages:
   - "apps/*"
   - "packages/*"
 allowBuilds:
-  '@scarf/scarf': false # install-time analytics from swagger-ui; not needed
-  '@swc/core': true # compiler used by the API tests (decorator metadata)
+  "@scarf/scarf": false # install-time analytics from swagger-ui; not needed
+  "@swc/core": true # compiler used by the API tests (decorator metadata)
   esbuild: true
   unrs-resolver: true

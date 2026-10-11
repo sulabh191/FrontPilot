@@ -11,8 +11,14 @@ export const previewRequestSchema = z.object({
     )
     .min(1)
     .max(20)
-    .refine((messages) => messages[0]?.role === "user", "The conversation must start with the customer")
-    .refine((messages) => messages.at(-1)?.role === "user", "The last message must be from the customer"),
+    .refine(
+      (messages) => messages[0]?.role === "user",
+      "The conversation must start with the customer",
+    )
+    .refine(
+      (messages) => messages.at(-1)?.role === "user",
+      "The last message must be from the customer",
+    ),
 });
 export type PreviewRequest = z.infer<typeof previewRequestSchema>;
 
@@ -20,5 +26,9 @@ export const previewResponseSchema = z.object({
   reply: z.string(),
   suggestions: z.array(z.string()).nullable(),
   toolCalls: z.array(z.object({ name: z.string(), isError: z.boolean() })),
-  usage: z.object({ model: z.string(), inputTokens: z.number().int(), outputTokens: z.number().int() }),
+  usage: z.object({
+    model: z.string(),
+    inputTokens: z.number().int(),
+    outputTokens: z.number().int(),
+  }),
 });

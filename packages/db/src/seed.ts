@@ -57,9 +57,19 @@ async function seed() {
       tone: "friendly",
       instructions:
         "Never quote prices for jobs not on the price list; offer a free estimate instead.\nFor gas smells or flooding, tell the customer to call our emergency line right away.",
-      tools: { answerQuestions: true, qualifyLeads: true, bookAppointments: true, followUps: false },
+      tools: {
+        answerQuestions: true,
+        qualifyLeads: true,
+        bookAppointments: true,
+        followUps: false,
+      },
       approvalMode: "review",
-      suggestedQuestions: ["Book a visit", "How much does it cost?", "I have an emergency", "What are your hours?"],
+      suggestedQuestions: [
+        "Book a visit",
+        "How much does it cost?",
+        "I have an emergency",
+        "What are your hours?",
+      ],
     });
 
     // Conversations, each with its messages.
@@ -71,9 +81,15 @@ async function seed() {
         updatedAt: minutesAgo(10),
         chat: [
           ["user", "My kitchen sink is leaking. Can someone come tomorrow?"],
-          ["assistant", "Yes, we can fix that! Leak repair starts from $149. Is it leaking now or just dripping?"],
+          [
+            "assistant",
+            "Yes, we can fix that! Leak repair starts from $149. Is it leaking now or just dripping?",
+          ],
           ["user", "Under the sink, steady drip. 2:30 works for me."],
-          ["assistant", "Thanks Priya! I've requested 2:30 PM tomorrow. The team will confirm shortly."],
+          [
+            "assistant",
+            "Thanks Priya! I've requested 2:30 PM tomorrow. The team will confirm shortly.",
+          ],
         ],
       },
       {
@@ -93,7 +109,10 @@ async function seed() {
         updatedAt: minutesAgo(65),
         chat: [
           ["user", "Can you give me a quote for a tankless water heater?"],
-          ["assistant", "Water heater installs start from $1,450. For tankless, the team will give you an exact quote. Can I take your number?"],
+          [
+            "assistant",
+            "Water heater installs start from $1,450. For tankless, the team will give you an exact quote. Can I take your number?",
+          ],
         ],
       },
       {
@@ -103,7 +122,10 @@ async function seed() {
         updatedAt: minutesAgo(60 * 20),
         chat: [
           ["user", "A pipe burst in my basement!"],
-          ["assistant", "Please call our 24/7 emergency line at (555) 010-9111 right away. Have you shut off the main water valve?"],
+          [
+            "assistant",
+            "Please call our 24/7 emergency line at (555) 010-9111 right away. Have you shut off the main water valve?",
+          ],
           ["user", "Yes, it's off now. Can someone come first thing tomorrow?"],
           ["assistant", "You're booked for 9:00 AM tomorrow. See you then!"],
         ],
@@ -141,24 +163,128 @@ async function seed() {
     const leadRows = await tx
       .insert(leads)
       .values([
-        { tenantId: TENANT_ID, conversationId: conversationIds["Priya Shah"], name: "Priya Shah", phone: "(555) 014-2201", service: "Leaking sink", score: "hot", stage: "new", estimatedValue: 180 },
-        { tenantId: TENANT_ID, conversationId: conversationIds["Mark Chen"], name: "Mark Chen", service: "Tankless water heater", score: "warm", stage: "new", estimatedValue: 3200 },
-        { tenantId: TENANT_ID, name: "Nina Brooks", service: "Low water pressure", score: "cold", stage: "new", estimatedValue: 150, source: "email" },
-        { tenantId: TENANT_ID, name: "Dana Lopez", service: "Drain cleaning", score: "hot", stage: "qualified", estimatedValue: 240 },
-        { tenantId: TENANT_ID, name: "Sam Patel", service: "Bathroom remodel quote", score: "warm", stage: "qualified", estimatedValue: 8500 },
-        { tenantId: TENANT_ID, conversationId: conversationIds["Alex Kim"], name: "Alex Kim", service: "Burst pipe repair", score: "hot", stage: "booked", estimatedValue: 450 },
-        { tenantId: TENANT_ID, name: "Jordan Lee", service: "Toilet repair", score: "cold", stage: "booked", estimatedValue: 200, source: "sms" },
-        { tenantId: TENANT_ID, name: "Rita Gomez", service: "Sump pump install", score: "warm", stage: "won", estimatedValue: 1250, source: "email" },
+        {
+          tenantId: TENANT_ID,
+          conversationId: conversationIds["Priya Shah"],
+          name: "Priya Shah",
+          phone: "(555) 014-2201",
+          service: "Leaking sink",
+          score: "hot",
+          stage: "new",
+          estimatedValue: 180,
+        },
+        {
+          tenantId: TENANT_ID,
+          conversationId: conversationIds["Mark Chen"],
+          name: "Mark Chen",
+          service: "Tankless water heater",
+          score: "warm",
+          stage: "new",
+          estimatedValue: 3200,
+        },
+        {
+          tenantId: TENANT_ID,
+          name: "Nina Brooks",
+          service: "Low water pressure",
+          score: "cold",
+          stage: "new",
+          estimatedValue: 150,
+          source: "email",
+        },
+        {
+          tenantId: TENANT_ID,
+          name: "Dana Lopez",
+          service: "Drain cleaning",
+          score: "hot",
+          stage: "qualified",
+          estimatedValue: 240,
+        },
+        {
+          tenantId: TENANT_ID,
+          name: "Sam Patel",
+          service: "Bathroom remodel quote",
+          score: "warm",
+          stage: "qualified",
+          estimatedValue: 8500,
+        },
+        {
+          tenantId: TENANT_ID,
+          conversationId: conversationIds["Alex Kim"],
+          name: "Alex Kim",
+          service: "Burst pipe repair",
+          score: "hot",
+          stage: "booked",
+          estimatedValue: 450,
+        },
+        {
+          tenantId: TENANT_ID,
+          name: "Jordan Lee",
+          service: "Toilet repair",
+          score: "cold",
+          stage: "booked",
+          estimatedValue: 200,
+          source: "sms",
+        },
+        {
+          tenantId: TENANT_ID,
+          name: "Rita Gomez",
+          service: "Sump pump install",
+          score: "warm",
+          stage: "won",
+          estimatedValue: 1250,
+          source: "email",
+        },
       ])
       .returning({ id: leads.id, name: leads.name });
     const leadId = (name: string) => leadRows.find((l) => l.name === name)?.id;
 
     await tx.insert(appointments).values([
-      { tenantId: TENANT_ID, leadId: leadId("Alex Kim"), customerName: "Alex Kim", service: "Burst pipe repair", address: "14 Elm St", startsAt: at(1, 9), status: "confirmed" },
-      { tenantId: TENANT_ID, leadId: leadId("Priya Shah"), customerName: "Priya Shah", service: "Leaking sink", address: "88 Lake Ave", startsAt: at(1, 14, 30), status: "awaiting_approval" },
-      { tenantId: TENANT_ID, leadId: leadId("Jordan Lee"), customerName: "Jordan Lee", service: "Toilet repair", address: "3 Birch Rd", startsAt: at(2, 11), status: "confirmed" },
-      { tenantId: TENANT_ID, leadId: leadId("Sam Patel"), customerName: "Sam Patel", service: "Bathroom remodel estimate", address: "52 Oak Ln", startsAt: at(3, 10), status: "confirmed", bookedBy: "staff" },
-      { tenantId: TENANT_ID, leadId: leadId("Dana Lopez"), customerName: "Dana Lopez", service: "Drain cleaning", address: "7 Pine Ct", startsAt: at(3, 16), status: "cancelled" },
+      {
+        tenantId: TENANT_ID,
+        leadId: leadId("Alex Kim"),
+        customerName: "Alex Kim",
+        service: "Burst pipe repair",
+        address: "14 Elm St",
+        startsAt: at(1, 9),
+        status: "confirmed",
+      },
+      {
+        tenantId: TENANT_ID,
+        leadId: leadId("Priya Shah"),
+        customerName: "Priya Shah",
+        service: "Leaking sink",
+        address: "88 Lake Ave",
+        startsAt: at(1, 14, 30),
+        status: "awaiting_approval",
+      },
+      {
+        tenantId: TENANT_ID,
+        leadId: leadId("Jordan Lee"),
+        customerName: "Jordan Lee",
+        service: "Toilet repair",
+        address: "3 Birch Rd",
+        startsAt: at(2, 11),
+        status: "confirmed",
+      },
+      {
+        tenantId: TENANT_ID,
+        leadId: leadId("Sam Patel"),
+        customerName: "Sam Patel",
+        service: "Bathroom remodel estimate",
+        address: "52 Oak Ln",
+        startsAt: at(3, 10),
+        status: "confirmed",
+        bookedBy: "staff",
+      },
+      {
+        tenantId: TENANT_ID,
+        leadId: leadId("Dana Lopez"),
+        customerName: "Dana Lopez",
+        service: "Drain cleaning",
+        address: "7 Pine Ct",
+        startsAt: at(3, 16),
+        status: "cancelled",
+      },
     ]);
   });
 }

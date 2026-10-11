@@ -42,7 +42,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = response;
       } else {
         const body = response as { message?: string | string[]; details?: unknown };
-        message = Array.isArray(body.message) ? body.message.join(", ") : (body.message ?? exception.message);
+        message = Array.isArray(body.message)
+          ? body.message.join(", ")
+          : (body.message ?? exception.message);
         details = body.details;
       }
     } else {

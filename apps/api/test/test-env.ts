@@ -1,7 +1,8 @@
 // Settings for the end-to-end tests. They run against their own database
 // (frontpilot_test on the same Postgres), never the development one.
 export const TEST_DATABASE_URL =
-  process.env.TEST_DATABASE_URL ?? "postgres://frontpilot:frontpilot@localhost:5433/frontpilot_test";
+  process.env.TEST_DATABASE_URL ??
+  "postgres://frontpilot:frontpilot@localhost:5433/frontpilot_test";
 
 // Same server, maintenance database: used only to drop/create the test database.
 export const ADMIN_DATABASE_URL = (() => {

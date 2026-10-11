@@ -12,7 +12,9 @@ export class LeadsRepository {
     return this.db
       .select()
       .from(leads)
-      .where(and(eq(leads.tenantId, tenantId), filter.stage ? eq(leads.stage, filter.stage) : undefined))
+      .where(
+        and(eq(leads.tenantId, tenantId), filter.stage ? eq(leads.stage, filter.stage) : undefined),
+      )
       .orderBy(desc(leads.createdAt));
   }
 }

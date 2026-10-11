@@ -1,5 +1,22 @@
-import { Body, Controller, Get, HttpCode, Logger, Param, Post, Res, UseGuards } from "@nestjs/common";
-import { ApiBody, ApiOkResponse, ApiOperation, ApiProduces, ApiTags, ApiTooManyRequestsResponse } from "@nestjs/swagger";
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Logger,
+  Param,
+  Post,
+  Res,
+  UseGuards,
+} from "@nestjs/common";
+import {
+  ApiBody,
+  ApiOkResponse,
+  ApiOperation,
+  ApiProduces,
+  ApiTags,
+  ApiTooManyRequestsResponse,
+} from "@nestjs/swagger";
 import { Throttle, ThrottlerGuard } from "@nestjs/throttler";
 import type { Response } from "express";
 import { Public } from "../../common/auth/public.decorator";
@@ -27,7 +44,9 @@ export class ChatController {
 
   @Get("widget/:slug")
   @Throttle({ default: { limit: 60, ttl: 60_000 } })
-  @ApiOperation({ summary: "Public widget settings for a business (name, greeting, starter questions)" })
+  @ApiOperation({
+    summary: "Public widget settings for a business (name, greeting, starter questions)",
+  })
   @ApiOkResponse({ schema: openApiSchema(widgetConfigSchema, "output") })
   widget(@Param("slug", new ZodValidationPipe(widgetSlugParamSchema)) slug: string) {
     return this.chat.widgetConfig(slug);
@@ -43,11 +62,16 @@ export class ChatController {
   })
   @ApiBody({
     schema: openApiSchema(chatRequestSchema),
-    examples: { start: { value: { tenantSlug: "rapid-plumbing", message: "Do you work weekends?" } } },
+    examples: {
+      start: { value: { tenantSlug: "rapid-plumbing", message: "Do you work weekends?" } },
+    },
   })
   @ApiProduces("application/x-ndjson")
   @ApiTooManyRequestsResponse({ description: "Too many messages; slow down" })
-  async send(@Body(new ZodValidationPipe(chatRequestSchema)) body: ChatRequest, @Res() res: Response) {
+  async send(
+    @Body(new ZodValidationPipe(chatRequestSchema)) body: ChatRequest,
+    @Res() res: Response,
+  ) {
     // 1. Validation, tenant and conversation checks: normal HTTP errors if anything is wrong.
     const turn = await this.chat.prepareTurn(body);
 

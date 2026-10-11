@@ -30,7 +30,13 @@ export type ApiClient = ReturnType<typeof createApiClient>;
 
 // Our standard error body (see the API's exception filter).
 export type ApiErrorBody = {
-  error: { statusCode: number; code: string; message: string; details?: unknown; requestId: string };
+  error: {
+    statusCode: number;
+    code: string;
+    message: string;
+    details?: unknown;
+    requestId: string;
+  };
 };
 
 export class ApiError extends Error {

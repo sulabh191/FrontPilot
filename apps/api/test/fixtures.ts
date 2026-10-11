@@ -20,7 +20,15 @@ export const B = { id: "tenant_e2e_b", slug: "e2e-other", name: "Other Business"
 
 // Open every day, so tests never depend on which weekday they run.
 const day = { open: "07:00", close: "19:00" };
-const openingHours: OpeningHours = { sun: day, mon: day, tue: day, wed: day, thu: day, fri: day, sat: day };
+const openingHours: OpeningHours = {
+  sun: day,
+  mon: day,
+  tue: day,
+  wed: day,
+  thu: day,
+  fri: day,
+  sat: day,
+};
 
 // "N days from today at HH:MM", in New York, as the UTC instant the database stores.
 export const daysAhead = (days: number) => addDays(dateInZone(new Date(), NY), days);
@@ -53,11 +61,26 @@ export async function resetFixtures(db: Database) {
   const pendingFor = async (customer: string, service: string, days: number) => {
     const [conversation] = await db
       .insert(conversations)
-      .values({ tenantId: A.id, customerName: customer, status: "needs_owner", summary: `${service}; awaiting approval` })
+      .values({
+        tenantId: A.id,
+        customerName: customer,
+        status: "needs_owner",
+        summary: `${service}; awaiting approval`,
+      })
       .returning();
     await db.insert(messages).values([
-      { tenantId: A.id, conversationId: conversation!.id, role: "user", content: `I need help with ${service}` },
-      { tenantId: A.id, conversationId: conversation!.id, role: "assistant", content: "Booked, pending approval." },
+      {
+        tenantId: A.id,
+        conversationId: conversation!.id,
+        role: "user",
+        content: `I need help with ${service}`,
+      },
+      {
+        tenantId: A.id,
+        conversationId: conversation!.id,
+        role: "assistant",
+        content: "Booked, pending approval.",
+      },
     ]);
     const [lead] = await db
       .insert(leads)
@@ -104,10 +127,18 @@ export async function resetFixtures(db: Database) {
     .returning();
 
   // Business B: its own chat, lead and pending booking. A must never reach these.
-  const [otherConversation] = await db.insert(conversations).values({ tenantId: B.id, status: "needs_owner" }).returning();
+  const [otherConversation] = await db
+    .insert(conversations)
+    .values({ tenantId: B.id, status: "needs_owner" })
+    .returning();
   const [otherLead] = await db
     .insert(leads)
-    .values({ tenantId: B.id, conversationId: otherConversation!.id, name: "Bob Other", service: "Roof repair" })
+    .values({
+      tenantId: B.id,
+      conversationId: otherConversation!.id,
+      name: "Bob Other",
+      service: "Roof repair",
+    })
     .returning();
   const [otherAppointment] = await db
     .insert(appointments)
@@ -126,6 +157,10 @@ export async function resetFixtures(db: Database) {
     declineMe,
     raceMe,
     confirmedAppointmentId: confirmed!.id,
-    other: { conversationId: otherConversation!.id, leadId: otherLead!.id, appointmentId: otherAppointment!.id },
+    other: {
+      conversationId: otherConversation!.id,
+      leadId: otherLead!.id,
+      appointmentId: otherAppointment!.id,
+    },
   };
 }

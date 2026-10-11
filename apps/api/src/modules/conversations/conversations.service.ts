@@ -32,7 +32,12 @@ export class ConversationsService {
     const rows = await this.repo.findMany(tenantId, filter);
     const allMessages = await this.repo.messagesFor(rows.map((r) => r.id));
     const items = rows
-      .map((row) => toSummary(row, allMessages.filter((m) => m.conversationId === row.id)))
+      .map((row) =>
+        toSummary(
+          row,
+          allMessages.filter((m) => m.conversationId === row.id),
+        ),
+      )
       .sort((a, b) => statusPriority[a.status] - statusPriority[b.status]);
     return { items };
   }

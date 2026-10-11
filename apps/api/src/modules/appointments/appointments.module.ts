@@ -10,7 +10,12 @@ import { BookingService } from "./booking.service";
 @Module({
   imports: [NotificationsModule, AvailabilityModule],
   controllers: [AppointmentsController],
-  providers: [AppointmentsService, AppointmentsRepository, AppointmentApprovalsService, BookingService],
+  providers: [
+    AppointmentsService,
+    AppointmentsRepository,
+    AppointmentApprovalsService,
+    BookingService,
+  ],
   exports: [AppointmentsService, AppointmentsRepository, BookingService], // the agent's booking tool uses BookingService
 })
 export class AppointmentsModule {}

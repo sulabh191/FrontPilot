@@ -69,11 +69,19 @@ export async function postChat(testApp: TestApp, body: Record<string, unknown>) 
     });
 
   const raw = res.body as string;
-  const lines = raw.trim() ? raw.trim().split("\n").map((line) => JSON.parse(line)) : [];
+  const lines = raw.trim()
+    ? raw
+        .trim()
+        .split("\n")
+        .map((line) => JSON.parse(line))
+    : [];
   return {
     status: res.status,
     contentType: res.headers["content-type"] as string | undefined,
     events: res.status === 200 ? (lines as { type: string; [key: string]: unknown }[]) : [],
-    error: res.status === 200 ? null : (lines[0] as { error: { statusCode: number; code: string; message: string } }),
+    error:
+      res.status === 200
+        ? null
+        : (lines[0] as { error: { statusCode: number; code: string; message: string } }),
   };
 }

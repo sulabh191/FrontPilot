@@ -21,15 +21,15 @@ export function ServiceUnavailable({
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-4 py-24 text-center">
       <h2 className="text-lg font-semibold">We can&apos;t load your dashboard right now</h2>
-      <p className="text-muted-foreground text-sm">
-        FrontPilot is having trouble reaching its servers. Your data is safe; please try again in
-        a moment.
+      <p className="text-sm text-muted-foreground">
+        FrontPilot is having trouble reaching its servers. Your data is safe; please try again in a
+        moment.
       </p>
       <Button onClick={reset}>
         <RotateCw /> Try again
       </Button>
       {/* In production Next.js hides the real message; the digest links this to the server log. */}
-      {error.digest && <p className="text-muted-foreground text-xs">Reference: {error.digest}</p>}
+      {error.digest && <p className="text-xs text-muted-foreground">Reference: {error.digest}</p>}
     </div>
   );
 }

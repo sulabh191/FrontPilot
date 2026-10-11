@@ -13,7 +13,10 @@ const idSchema = z.uuid();
 // it updates the appointment, lead and conversation, then texts the customer.
 // It only acts on an appointment that belongs to the token's business and is
 // still awaiting approval, so the browser can't touch anyone else's bookings.
-async function decide(appointmentId: string, decision: "approve" | "decline"): Promise<ApprovalResult> {
+async function decide(
+  appointmentId: string,
+  decision: "approve" | "decline",
+): Promise<ApprovalResult> {
   // Server Actions are public endpoints: anyone can call them with any input.
   const parsed = idSchema.safeParse(appointmentId);
   if (!parsed.success) return { ok: false, message: "Invalid appointment." };

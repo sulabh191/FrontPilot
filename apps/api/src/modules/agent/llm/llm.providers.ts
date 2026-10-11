@@ -14,7 +14,9 @@ export const llmProviders: Provider[] = [
         // Start the API anyway; only agent calls fail, with a clear message.
         return new Proxy({} as Anthropic, {
           get() {
-            throw new ServiceUnavailableException("The AI assistant is not configured (ANTHROPIC_API_KEY missing)");
+            throw new ServiceUnavailableException(
+              "The AI assistant is not configured (ANTHROPIC_API_KEY missing)",
+            );
           },
         });
       }
@@ -24,6 +26,7 @@ export const llmProviders: Provider[] = [
   {
     provide: LLM_MODEL,
     inject: [ConfigService],
-    useFactory: (config: ConfigService<Env, true>) => config.get("ANTHROPIC_MODEL", { infer: true }),
+    useFactory: (config: ConfigService<Env, true>) =>
+      config.get("ANTHROPIC_MODEL", { infer: true }),
   },
 ];

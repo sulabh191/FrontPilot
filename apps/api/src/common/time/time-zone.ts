@@ -14,7 +14,14 @@ function offsetMs(instant: Date, timeZone: string): number {
     second: "2-digit",
   }).formatToParts(instant);
   const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
-  const asUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  const asUtc = Date.UTC(
+    get("year"),
+    get("month") - 1,
+    get("day"),
+    get("hour"),
+    get("minute"),
+    get("second"),
+  );
   return asUtc - instant.getTime();
 }
 
@@ -30,13 +37,27 @@ export function zonedTimeToUtc(date: string, time: string, timeZone: string): Da
 
 // The calendar date ("YYYY-MM-DD") of an instant, in the given zone.
 export function dateInZone(instant: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(instant);
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(instant);
 }
 
 // "Mon, Oct 5 at 9:00 AM"
 export function formatInZone(instant: Date, timeZone: string): string {
-  const day = instant.toLocaleDateString("en-US", { timeZone, weekday: "short", month: "short", day: "numeric" });
-  const time = instant.toLocaleTimeString("en-US", { timeZone, hour: "numeric", minute: "2-digit" });
+  const day = instant.toLocaleDateString("en-US", {
+    timeZone,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+  const time = instant.toLocaleTimeString("en-US", {
+    timeZone,
+    hour: "numeric",
+    minute: "2-digit",
+  });
   return `${day} at ${time}`;
 }
 

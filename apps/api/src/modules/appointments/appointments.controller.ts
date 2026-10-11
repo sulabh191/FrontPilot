@@ -35,7 +35,11 @@ export class AppointmentsController {
   @Get()
   @ApiOperation({ summary: "List appointments, soonest first" })
   @ApiQuery({ name: "status", required: false, enum: appointmentStatuses })
-  @ApiQuery({ name: "from", required: false, description: "ISO date-time, e.g. 2026-10-06T00:00:00Z" })
+  @ApiQuery({
+    name: "from",
+    required: false,
+    description: "ISO date-time, e.g. 2026-10-06T00:00:00Z",
+  })
   @ApiOkResponse({ schema: openApiSchema(appointmentListSchema, "output") })
   list(
     @CurrentTenant() tenant: Tenant,
@@ -46,7 +50,9 @@ export class AppointmentsController {
 
   @Post(":id/approve")
   @HttpCode(200)
-  @ApiOperation({ summary: "Approve a booking awaiting approval; texts the customer if they agreed" })
+  @ApiOperation({
+    summary: "Approve a booking awaiting approval; texts the customer if they agreed",
+  })
   @ApiOkResponse({ schema: openApiSchema(approvalResultSchema, "output") })
   @ApiNotFoundResponse({ description: "No such appointment for this business" })
   @ApiConflictResponse({ description: "The booking is not awaiting approval anymore" })

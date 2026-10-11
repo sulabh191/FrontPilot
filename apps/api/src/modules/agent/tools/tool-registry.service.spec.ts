@@ -14,9 +14,12 @@ const fakeTool = (name: string, sideEffects: boolean) => ({
 });
 
 const settings = (bookAppointments: boolean) =>
-  ({ tools: { answerQuestions: true, qualifyLeads: true, bookAppointments, followUps: false } }) as AgentSettings;
+  ({
+    tools: { answerQuestions: true, qualifyLeads: true, bookAppointments, followUps: false },
+  }) as AgentSettings;
 
-const names = (tools: { definition: { name: string } }[]) => tools.map((tool) => tool.definition.name);
+const names = (tools: { definition: { name: string } }[]) =>
+  tools.map((tool) => tool.definition.name);
 
 describe("ToolRegistry", () => {
   let registry: ToolRegistry;
@@ -34,7 +37,9 @@ describe("ToolRegistry", () => {
   });
 
   it("offers only suggested replies when booking is turned off", () => {
-    expect(names(registry.enabledFor(settings(false), { preview: false }))).toEqual(["suggest_replies"]);
+    expect(names(registry.enabledFor(settings(false), { preview: false }))).toEqual([
+      "suggest_replies",
+    ]);
   });
 
   it("offers the booking tools when the owner turned booking on", () => {

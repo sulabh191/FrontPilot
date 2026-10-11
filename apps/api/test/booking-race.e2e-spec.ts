@@ -49,7 +49,11 @@ describe("Double-booking guard (e2e, real database)", () => {
         .select({ n: count() })
         .from(appointments)
         .where(
-          and(eq(appointments.tenantId, A.id), eq(appointments.startsAt, startsAt), ne(appointments.status, "cancelled")),
+          and(
+            eq(appointments.tenantId, A.id),
+            eq(appointments.startsAt, startsAt),
+            ne(appointments.status, "cancelled"),
+          ),
         )
     )[0]!.n;
 
@@ -68,10 +72,16 @@ describe("Double-booking guard (e2e, real database)", () => {
     const second = await booking.book(request(secondChat, 6, "09:00"));
 
     expect(staleCheck).toHaveBeenCalled();
-    expect(second).toEqual({ ok: false, reason: "That time was just taken. Check availability again." });
+    expect(second).toEqual({
+      ok: false,
+      reason: "That time was just taken. Check availability again.",
+    });
     expect(await liveBookingsAt(slot)).toBe(1);
     // The transaction rolled back completely: no orphan lead for the losing chat.
-    const orphanLeads = await t.db.select({ n: count() }).from(leads).where(eq(leads.conversationId, secondChat));
+    const orphanLeads = await t.db
+      .select({ n: count() })
+      .from(leads)
+      .where(eq(leads.conversationId, secondChat));
     expect(orphanLeads[0]!.n).toBe(0);
     staleCheck.mockRestore();
   });
@@ -107,7 +117,9 @@ describe("Double-booking guard (e2e, real database)", () => {
     const rows = await t.db
       .select({ n: count() })
       .from(appointments)
-      .where(and(eq(appointments.startsAt, nyTime(2, "10:00")), ne(appointments.status, "cancelled")));
+      .where(
+        and(eq(appointments.startsAt, nyTime(2, "10:00")), ne(appointments.status, "cancelled")),
+      );
     expect(rows[0]!.n).toBe(2);
   });
 });

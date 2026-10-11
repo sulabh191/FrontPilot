@@ -20,7 +20,11 @@ export class ToolLoopAgentRunner implements AgentRunner {
     private readonly registry: ToolRegistry,
   ) {}
 
-  async run(input: AgentRunInput, onEvent: (event: AgentEvent) => void, signal?: AbortSignal): Promise<AgentRunResult> {
+  async run(
+    input: AgentRunInput,
+    onEvent: (event: AgentEvent) => void,
+    signal?: AbortSignal,
+  ): Promise<AgentRunResult> {
     const toolsByName = new Map(input.tools.map((tool) => [tool.definition.name, tool]));
     const messages: Anthropic.MessageParam[] = [...input.history];
     const result: AgentRunResult = {
@@ -61,7 +65,9 @@ export class ToolLoopAgentRunner implements AgentRunner {
       result.inputTokens += final.usage.input_tokens;
       result.outputTokens += final.usage.output_tokens;
 
-      const calls = final.content.filter((block): block is Anthropic.ToolUseBlock => block.type === "tool_use");
+      const calls = final.content.filter(
+        (block): block is Anthropic.ToolUseBlock => block.type === "tool_use",
+      );
       for (const call of calls) {
         if (this.registry.isDisplayOnly(call.name)) {
           const parsed = suggestRepliesInput.safeParse(call.input);
@@ -80,12 +86,22 @@ export class ToolLoopAgentRunner implements AgentRunner {
           const output = tool
             ? await tool.execute(call.input, input.context).catch((error: unknown) => {
                 this.logger.error(`Tool ${call.name} threw`, error as Error);
-                return { content: "The tool failed. Apologize and offer a callback.", isError: true };
+                return {
+                  content: "The tool failed. Apologize and offer a callback.",
+                  isError: true,
+                };
               })
             : { content: `Unknown tool ${call.name}`, isError: true };
           result.toolCalls.push({ name: call.name, isError: Boolean(output.isError) });
-          this.logger.log(`tool=${call.name} error=${output.isError ? "yes" : "no"} tenant=${input.context.tenant.id}`);
-          return { type: "tool_result", tool_use_id: call.id, content: output.content, is_error: output.isError };
+          this.logger.log(
+            `tool=${call.name} error=${output.isError ? "yes" : "no"} tenant=${input.context.tenant.id}`,
+          );
+          return {
+            type: "tool_result",
+            tool_use_id: call.id,
+            content: output.content,
+            is_error: output.isError,
+          };
         }),
       );
       messages.push({ role: "assistant", content: final.content });

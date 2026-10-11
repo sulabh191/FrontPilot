@@ -4,7 +4,14 @@ export { migrateDatabase } from "./migrate";
 export * from "./schema";
 export { lt } from "drizzle-orm";
 
-import type { agentSettings, appointments, conversations, leads, messages, tenants } from "./schema";
+import type {
+  agentSettings,
+  appointments,
+  conversations,
+  leads,
+  messages,
+  tenants,
+} from "./schema";
 
 // Row types, inferred from the tables, for use across the app.
 export type TenantRow = typeof tenants.$inferSelect;

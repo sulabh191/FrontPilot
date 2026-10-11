@@ -2,29 +2,29 @@
 
 The database layer of FrontPilot: **Postgres 17** schema, versioned SQL migrations, a seed script and the database client, built with [Drizzle ORM](https://orm.drizzle.team). Only the API (`apps/api`) uses this package; the web app talks to the API, never to the database.
 
-| File | What it is |
-| --- | --- |
-| `src/schema.ts` | Tables, enums, indexes and constraints: the single source of truth for the database structure |
-| `drizzle/` | Generated SQL migrations (`0000_….sql`, …) + Drizzle's snapshots; committed to Git |
-| `src/client.ts` | `createDatabase(url)`: a connection pool + Drizzle instance (the API creates one at startup) |
-| `src/migrate.ts` | `migrateDatabase(url, folder)`: applies migrations from code (used by the e2e tests and CI) |
-| `src/seed.ts` | Resets the demo business (Rapid Plumbing) with sample data |
-| `src/index.ts` | Public exports: client, tables, row types, query helpers (`eq`, `and`, `sql`, …) |
-| `drizzle.config.ts` | Drizzle Kit settings; reads `DATABASE_URL` from `apps/api/.env.local` |
+| File                | What it is                                                                                    |
+| ------------------- | --------------------------------------------------------------------------------------------- |
+| `src/schema.ts`     | Tables, enums, indexes and constraints: the single source of truth for the database structure |
+| `drizzle/`          | Generated SQL migrations (`0000_….sql`, …) + Drizzle's snapshots; committed to Git            |
+| `src/client.ts`     | `createDatabase(url)`: a connection pool + Drizzle instance (the API creates one at startup)  |
+| `src/migrate.ts`    | `migrateDatabase(url, folder)`: applies migrations from code (used by the e2e tests and CI)   |
+| `src/seed.ts`       | Resets the demo business (Rapid Plumbing) with sample data                                    |
+| `src/index.ts`      | Public exports: client, tables, row types, query helpers (`eq`, `and`, `sql`, …)              |
+| `drizzle.config.ts` | Drizzle Kit settings; reads `DATABASE_URL` from `apps/api/.env.local`                         |
 
 Built with tsup to ESM + CommonJS + type declarations (`dist/`).
 
 ## Commands (from the repository root)
 
-| Command | What |
-| --- | --- |
-| `pnpm db:up` / `pnpm db:down` | Start / stop local Postgres in Docker (port 5433) |
-| `pnpm db:generate` | Create a migration from changes in `src/schema.ts` |
-| `pnpm db:migrate` | Apply pending migrations |
-| `pnpm db:seed` | Reset the demo business with sample data |
-| `pnpm db:psql` | SQL prompt inside the container (`\dt` tables · `\d appointments` columns and indexes · `\q` quit) |
-| `pnpm db:studio` | Browse the data in a browser |
-| `pnpm --filter @frontpilot/db build` | Rebuild `dist/` (Turbo does this automatically before dev, typecheck and tests) |
+| Command                              | What                                                                                               |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `pnpm db:up` / `pnpm db:down`        | Start / stop local Postgres in Docker (port 5433)                                                  |
+| `pnpm db:generate`                   | Create a migration from changes in `src/schema.ts`                                                 |
+| `pnpm db:migrate`                    | Apply pending migrations                                                                           |
+| `pnpm db:seed`                       | Reset the demo business with sample data                                                           |
+| `pnpm db:psql`                       | SQL prompt inside the container (`\dt` tables · `\d appointments` columns and indexes · `\q` quit) |
+| `pnpm db:studio`                     | Browse the data in a browser                                                                       |
+| `pnpm --filter @frontpilot/db build` | Rebuild `dist/` (Turbo does this automatically before dev, typecheck and tests)                    |
 
 ## Changing the schema
 
@@ -39,21 +39,21 @@ Never edit the database by hand and never edit an applied migration; add a new o
 
 ## Tables
 
-| Table | Holds | Key columns |
-| --- | --- | --- |
-| tenants | One row per business | slug (unique), time_zone, opening_hours (JSON), appointment_minutes |
-| agent_settings | Agent setup page | agent_name, greeting, tone, instructions, tools (JSON), approval_mode, suggested_questions |
-| conversations | Chat threads | status, customer_name, summary |
-| messages | Every message | role, content, input_tokens, output_tokens |
-| leads | CRM | stage, score, phone, sms_consent, conversation_id |
-| appointments | Bookings | starts_at (UTC), status, booked_by, lead_id |
+| Table          | Holds                | Key columns                                                                                |
+| -------------- | -------------------- | ------------------------------------------------------------------------------------------ |
+| tenants        | One row per business | slug (unique), time_zone, opening_hours (JSON), appointment_minutes                        |
+| agent_settings | Agent setup page     | agent_name, greeting, tone, instructions, tools (JSON), approval_mode, suggested_questions |
+| conversations  | Chat threads         | status, customer_name, summary                                                             |
+| messages       | Every message        | role, content, input_tokens, output_tokens                                                 |
+| leads          | CRM                  | stage, score, phone, sms_consent, conversation_id                                          |
+| appointments   | Bookings             | starts_at (UTC), status, booked_by, lead_id                                                |
 
 Every table has **tenant_id** (multi-tenancy). Foreign keys enforce relationships; cascade deletes clean up a tenant's data.
 
 ## Status values
 
-| Conversation: "does the owner need to act?" | Appointment: "is the visit happening?" |
-| --- | --- |
+| Conversation: "does the owner need to act?"          | Appointment: "is the visit happening?"  |
+| ---------------------------------------------------- | --------------------------------------- |
 | open, needs_owner, resolved_by_ai, resolved_by_owner | awaiting_approval, confirmed, cancelled |
 
 A conversation can need the owner with no appointment (custom quote), and one conversation can have several appointments. So: different entities, different statuses, updated together in transactions.
@@ -62,15 +62,15 @@ DB stores **codes** (`needs_owner`); UI shows **labels** ("Needs you"). Clients 
 
 ## Indexes and constraints
 
-| Table | Index / constraint | Why |
-| --- | --- | --- |
-| tenants | PRIMARY KEY `id` (text, e.g. `tenant_rapid_plumbing`), UNIQUE `slug` | Look up a business by its URL name (widget, auth) |
-| agent_settings | PRIMARY KEY `tenant_id` | Exactly one settings row per business; makes the upsert possible |
-| conversations | `conversations_tenant_updated_idx (tenant_id, updated_at)` | Dashboard list: this business's chats, newest first |
-| messages | `messages_conversation_idx (conversation_id, created_at)` | Load one chat's history in order |
-| leads | `leads_tenant_stage_idx (tenant_id, stage)` | Leads board / filter by stage |
-| appointments | `appointments_tenant_starts_idx (tenant_id, starts_at)` | Appointment list + availability lookups by time range |
-| appointments | **`appointments_tenant_slot_unique (tenant_id, starts_at) WHERE status <> 'cancelled'`** | **Partial unique index**: one live booking per business per start time (see below) |
+| Table          | Index / constraint                                                                       | Why                                                                                |
+| -------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| tenants        | PRIMARY KEY `id` (text, e.g. `tenant_rapid_plumbing`), UNIQUE `slug`                     | Look up a business by its URL name (widget, auth)                                  |
+| agent_settings | PRIMARY KEY `tenant_id`                                                                  | Exactly one settings row per business; makes the upsert possible                   |
+| conversations  | `conversations_tenant_updated_idx (tenant_id, updated_at)`                               | Dashboard list: this business's chats, newest first                                |
+| messages       | `messages_conversation_idx (conversation_id, created_at)`                                | Load one chat's history in order                                                   |
+| leads          | `leads_tenant_stage_idx (tenant_id, stage)`                                              | Leads board / filter by stage                                                      |
+| appointments   | `appointments_tenant_starts_idx (tenant_id, starts_at)`                                  | Appointment list + availability lookups by time range                              |
+| appointments   | **`appointments_tenant_slot_unique (tenant_id, starts_at) WHERE status <> 'cancelled'`** | **Partial unique index**: one live booking per business per start time (see below) |
 
 Foreign keys: `tenant_id → tenants ON DELETE CASCADE` (deleting a business deletes all its data) · `messages.conversation_id → conversations CASCADE` · `leads.conversation_id → conversations SET NULL` · `appointments.lead_id → leads SET NULL` (history survives).
 
@@ -80,8 +80,9 @@ Foreign keys: `tenant_id → tenants ON DELETE CASCADE` (deleting a business del
 // packages/db/src/schema.ts
 uniqueIndex("appointments_tenant_slot_unique")
   .on(t.tenantId, t.startsAt)
-  .where(sql`${t.status} <> 'cancelled'`)
+  .where(sql`${t.status} <> 'cancelled'`);
 ```
+
 ```sql
 -- what the migration runs
 CREATE UNIQUE INDEX "appointments_tenant_slot_unique" ON "appointments"
@@ -101,28 +102,31 @@ Code lives in the API's repositories and services (`apps/api/src/modules/<featur
 
 ### Reads (dashboard)
 
-| Operation | Endpoint | SQL (simplified) | Index used / note |
-| --- | --- | --- | --- |
-| Who is calling | every protected call (AuthGuard) | `SELECT id, name, slug, time_zone FROM tenants WHERE slug = $1 LIMIT 1` | UNIQUE slug |
-| Leads | `GET /v1/leads?stage=` | `SELECT * FROM leads WHERE tenant_id = $1 [AND stage = $2] ORDER BY created_at DESC` | `leads_tenant_stage_idx`; optional filters become `undefined` → dropped from `and()` |
-| Conversations | `GET /v1/conversations` | ① `SELECT * FROM conversations WHERE tenant_id = $1 [AND status = $2] ORDER BY updated_at DESC LIMIT $3` ② `SELECT * FROM messages WHERE conversation_id IN ($1…$n) ORDER BY created_at` | ② is ONE query for all chats (**avoids N+1**) |
-| One conversation | `GET /v1/conversations/:id` | `SELECT * FROM conversations WHERE id = $1 AND tenant_id = $2 LIMIT 1` | No row → **404** (another business's id looks like "not found": IDOR protection) |
-| Appointments | `GET /v1/appointments` | `SELECT * FROM appointments WHERE tenant_id = $1 [AND status = $2] [AND starts_at >= $3] ORDER BY starts_at ASC` | `appointments_tenant_starts_idx` |
-| Availability | `GET /v1/availability?date=` | ① `SELECT time_zone, opening_hours, appointment_minutes FROM tenants WHERE id = $1` ② `SELECT starts_at FROM appointments WHERE tenant_id = $1 AND status <> 'cancelled' AND starts_at >= $2 AND starts_at < $3` | Slots are computed in code: opening hours − too soon − booked |
-| Overview | `GET /v1/overview` | `SELECT status, count(*) FROM conversations WHERE tenant_id = $1 AND created_at >= $2 GROUP BY status` · `SELECT count(*) FROM leads WHERE tenant_id = $1 AND created_at >= $2` · `SELECT count(*) FROM appointments WHERE tenant_id = $1 AND created_at >= $2 AND status <> 'cancelled'` · `SELECT * FROM conversations WHERE tenant_id = $1 AND status = 'needs_owner' ORDER BY updated_at DESC LIMIT n` · `SELECT conversation_id, content FROM messages WHERE conversation_id IN (…) AND role = 'user'` · `SELECT * FROM appointments WHERE tenant_id = $1 AND starts_at >= now AND status <> 'cancelled' ORDER BY starts_at LIMIT n` | Independent queries run in parallel (`Promise.all`); `GROUP BY` counts in the DB, not in JS |
-| Agent settings | `GET /v1/agent-settings` | `SELECT * FROM agent_settings WHERE tenant_id = $1 LIMIT 1` | No row → defaults |
-| Health | `GET /health` | `SELECT 1` | Proves the DB answers |
+| Operation        | Endpoint                         | SQL (simplified)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Index used / note                                                                           |
+| ---------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Who is calling   | every protected call (AuthGuard) | `SELECT id, name, slug, time_zone FROM tenants WHERE slug = $1 LIMIT 1`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | UNIQUE slug                                                                                 |
+| Leads            | `GET /v1/leads?stage=`           | `SELECT * FROM leads WHERE tenant_id = $1 [AND stage = $2] ORDER BY created_at DESC`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `leads_tenant_stage_idx`; optional filters become `undefined` → dropped from `and()`        |
+| Conversations    | `GET /v1/conversations`          | ① `SELECT * FROM conversations WHERE tenant_id = $1 [AND status = $2] ORDER BY updated_at DESC LIMIT $3` ② `SELECT * FROM messages WHERE conversation_id IN ($1…$n) ORDER BY created_at`                                                                                                                                                                                                                                                                                                                                                                                                                                                  | ② is ONE query for all chats (**avoids N+1**)                                               |
+| One conversation | `GET /v1/conversations/:id`      | `SELECT * FROM conversations WHERE id = $1 AND tenant_id = $2 LIMIT 1`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | No row → **404** (another business's id looks like "not found": IDOR protection)            |
+| Appointments     | `GET /v1/appointments`           | `SELECT * FROM appointments WHERE tenant_id = $1 [AND status = $2] [AND starts_at >= $3] ORDER BY starts_at ASC`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `appointments_tenant_starts_idx`                                                            |
+| Availability     | `GET /v1/availability?date=`     | ① `SELECT time_zone, opening_hours, appointment_minutes FROM tenants WHERE id = $1` ② `SELECT starts_at FROM appointments WHERE tenant_id = $1 AND status <> 'cancelled' AND starts_at >= $2 AND starts_at < $3`                                                                                                                                                                                                                                                                                                                                                                                                                          | Slots are computed in code: opening hours − too soon − booked                               |
+| Overview         | `GET /v1/overview`               | `SELECT status, count(*) FROM conversations WHERE tenant_id = $1 AND created_at >= $2 GROUP BY status` · `SELECT count(*) FROM leads WHERE tenant_id = $1 AND created_at >= $2` · `SELECT count(*) FROM appointments WHERE tenant_id = $1 AND created_at >= $2 AND status <> 'cancelled'` · `SELECT * FROM conversations WHERE tenant_id = $1 AND status = 'needs_owner' ORDER BY updated_at DESC LIMIT n` · `SELECT conversation_id, content FROM messages WHERE conversation_id IN (…) AND role = 'user'` · `SELECT * FROM appointments WHERE tenant_id = $1 AND starts_at >= now AND status <> 'cancelled' ORDER BY starts_at LIMIT n` | Independent queries run in parallel (`Promise.all`); `GROUP BY` counts in the DB, not in JS |
+| Agent settings   | `GET /v1/agent-settings`         | `SELECT * FROM agent_settings WHERE tenant_id = $1 LIMIT 1`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | No row → defaults                                                                           |
+| Health           | `GET /health`                    | `SELECT 1`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Proves the DB answers                                                                       |
 
 ### Writes
 
 **Save agent settings (upsert)**, `PUT /v1/agent-settings`
+
 ```sql
 INSERT INTO agent_settings (tenant_id, agent_name, greeting, …, updated_at) VALUES ($1, $2, …)
 ON CONFLICT (tenant_id) DO UPDATE SET agent_name = $2, greeting = $3, …, updated_at = $n;
 ```
+
 Insert the first time, update after: one statement, no "does it exist?" race.
 
 **Customer chat**, `POST /v1/chat`
+
 ```sql
 SELECT id, name, slug, time_zone FROM tenants WHERE slug = $1 LIMIT 1;                  -- business
 INSERT INTO conversations (tenant_id, channel, status) VALUES ($1, 'website_chat', 'open') RETURNING id;  -- new chat
@@ -136,6 +140,7 @@ SELECT role, content FROM messages WHERE conversation_id = $1 ORDER BY created_a
 ```
 
 **Booking** (agent's `book_appointment` → `BookingService.book`)
+
 ```sql
 -- 1. Idempotency: same chat + same slot already booked? return it (retries never double-book)
 SELECT a.id, a.status FROM appointments a JOIN leads l ON a.lead_id = l.id
@@ -153,6 +158,7 @@ COMMIT;
 ```
 
 **Approve / decline**, `POST /v1/appointments/:id/approve|decline`
+
 ```sql
 BEGIN;
   SELECT status FROM appointments WHERE id = $1 AND tenant_id = $2 LIMIT 1;     -- none → 404; not pending → 409
@@ -171,17 +177,17 @@ SELECT a.customer_name, a.service, a.starts_at, l.phone, l.sms_consent, t.name, 
 
 ### Patterns to remember
 
-| Pattern | Where | Why |
-| --- | --- | --- |
-| `WHERE … AND tenant_id = $` on every query | Everywhere | Tenant isolation; other business → no rows → 404 |
-| `IN (…)` batch load | Conversations, overview | Avoid N+1 (one query instead of one per chat) |
-| `GROUP BY` + `count(*)` | Overview | Let the DB count, don't load rows into JS |
-| `INSERT … ON CONFLICT DO UPDATE` | Agent settings | Atomic upsert |
-| `BEGIN … COMMIT` transaction | Booking, approval, saving messages | Several tables change together or not at all |
-| Conditional `UPDATE … WHERE status = 'awaiting_approval'` | Approve/decline | Optimistic concurrency: the loser updates 0 rows → 409 |
-| Partial `UNIQUE INDEX … WHERE` | Appointments | The DB enforces "one live booking per slot" even under races |
-| `RETURNING` | Inserts/updates | Get new IDs / changed values without a second query |
-| Times in `timestamptz` (UTC) | `starts_at`, `created_at` | Convert to the business zone only for display |
+| Pattern                                                   | Where                              | Why                                                          |
+| --------------------------------------------------------- | ---------------------------------- | ------------------------------------------------------------ |
+| `WHERE … AND tenant_id = $` on every query                | Everywhere                         | Tenant isolation; other business → no rows → 404             |
+| `IN (…)` batch load                                       | Conversations, overview            | Avoid N+1 (one query instead of one per chat)                |
+| `GROUP BY` + `count(*)`                                   | Overview                           | Let the DB count, don't load rows into JS                    |
+| `INSERT … ON CONFLICT DO UPDATE`                          | Agent settings                     | Atomic upsert                                                |
+| `BEGIN … COMMIT` transaction                              | Booking, approval, saving messages | Several tables change together or not at all                 |
+| Conditional `UPDATE … WHERE status = 'awaiting_approval'` | Approve/decline                    | Optimistic concurrency: the loser updates 0 rows → 409       |
+| Partial `UNIQUE INDEX … WHERE`                            | Appointments                       | The DB enforces "one live booking per slot" even under races |
+| `RETURNING`                                               | Inserts/updates                    | Get new IDs / changed values without a second query          |
+| Times in `timestamptz` (UTC)                              | `starts_at`, `created_at`          | Convert to the business zone only for display                |
 
 ### Handy queries for inspecting the database
 

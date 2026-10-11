@@ -15,9 +15,17 @@ export async function getOverview(): Promise<OverviewData> {
     stats: [
       { label: "Conversations", value: String(stats.conversations), trend: "Last 7 days" },
       { label: "New leads", value: String(stats.newLeads), trend: "Last 7 days" },
-      { label: "Appointments booked", value: String(stats.appointmentsBooked), trend: "Last 7 days" },
+      {
+        label: "Appointments booked",
+        value: String(stats.appointmentsBooked),
+        trend: "Last 7 days",
+      },
       // The API sends a 0–1 rate; percentages are a display decision.
-      { label: "Handled by AI", value: `${Math.round(stats.aiResolutionRate * 100)}%`, trend: "No human needed" },
+      {
+        label: "Handled by AI",
+        value: `${Math.round(stats.aiResolutionRate * 100)}%`,
+        trend: "No human needed",
+      },
     ],
     needsAttention: needsAttention.map((c) => ({
       id: c.conversationId,

@@ -63,15 +63,28 @@ export class AppointmentApprovalsService {
           .update(conversations)
           .set(
             decision === "approve"
-              ? { status: "resolved_by_owner", summary: `${updated.service}; booking confirmed by owner`, updatedAt: new Date() }
-              : { status: "needs_owner", summary: `${updated.service}; booking declined, follow up with customer`, updatedAt: new Date() },
+              ? {
+                  status: "resolved_by_owner",
+                  summary: `${updated.service}; booking confirmed by owner`,
+                  updatedAt: new Date(),
+                }
+              : {
+                  status: "needs_owner",
+                  summary: `${updated.service}; booking declined, follow up with customer`,
+                  updatedAt: new Date(),
+                },
           )
-          .where(and(eq(conversations.id, lead.conversationId), eq(conversations.tenantId, tenantId)));
+          .where(
+            and(eq(conversations.id, lead.conversationId), eq(conversations.tenantId, tenantId)),
+          );
       }
     });
 
     // 4. After the commit: tell the customer. Never fails the request.
-    await this.notifications.notifyBookingUpdate(appointmentId, decision === "approve" ? "confirmed" : "declined");
+    await this.notifications.notifyBookingUpdate(
+      appointmentId,
+      decision === "approve" ? "confirmed" : "declined",
+    );
 
     return { id: appointmentId, status: newStatus };
   }

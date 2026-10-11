@@ -26,7 +26,12 @@ function modelReply({ text = [], tools = [] }: Step) {
     finalMessage: async () => ({
       content: [
         ...(text.length ? [{ type: "text", text: text.join("") }] : []),
-        ...tools.map((tool, i) => ({ type: "tool_use", id: `call_${i}`, name: tool.name, input: tool.input })),
+        ...tools.map((tool, i) => ({
+          type: "tool_use",
+          id: `call_${i}`,
+          name: tool.name,
+          input: tool.input,
+        })),
       ],
       stop_reason: tools.length ? "tool_use" : "end_turn",
       usage: { input_tokens: 100, output_tokens: 10 },
@@ -59,7 +64,10 @@ describe("ToolLoopAgentRunner", () => {
         ToolLoopAgentRunner,
         { provide: LLM_CLIENT, useValue: { messages: { stream } } },
         { provide: LLM_MODEL, useValue: "test-model" },
-        { provide: ToolRegistry, useValue: { isDisplayOnly: (name: string) => name === "suggest_replies" } },
+        {
+          provide: ToolRegistry,
+          useValue: { isDisplayOnly: (name: string) => name === "suggest_replies" },
+        },
       ],
     }).compile();
     runner = moduleRef.get(ToolLoopAgentRunner);
@@ -68,7 +76,12 @@ describe("ToolLoopAgentRunner", () => {
   async function run(tools: AgentTool[] = [checkAvailability], signal?: AbortSignal) {
     const events: AgentEvent[] = [];
     const result = await runner.run(
-      { system: "SYSTEM PROMPT", history: [{ role: "user", content: "Do you fix leaks?" }], tools, context },
+      {
+        system: "SYSTEM PROMPT",
+        history: [{ role: "user", content: "Do you fix leaks?" }],
+        tools,
+        context,
+      },
       (event) => events.push(event),
       signal,
     );
@@ -87,7 +100,12 @@ describe("ToolLoopAgentRunner", () => {
       { type: "text", text: "Yes, " },
       { type: "text", text: "we fix leaks." },
     ]);
-    expect(result).toMatchObject({ text: "Yes, we fix leaks.", inputTokens: 100, outputTokens: 10, model: "test-model" });
+    expect(result).toMatchObject({
+      text: "Yes, we fix leaks.",
+      inputTokens: 100,
+      outputTokens: 10,
+      model: "test-model",
+    });
     expect(stream).toHaveBeenCalledTimes(1);
     expect(stream).toHaveBeenCalledWith(
       expect.objectContaining({ model: "test-model", system: "SYSTEM PROMPT", max_tokens: 600 }),
@@ -98,7 +116,9 @@ describe("ToolLoopAgentRunner", () => {
   it("runs a requested tool, sends the result back, then answers", async () => {
     checkAvailability.execute.mockResolvedValue({ content: "Free: 09:00, 10:00" });
     stream
-      .mockReturnValueOnce(modelReply({ tools: [{ name: "check_availability", input: { date: "2026-10-13" } }] }))
+      .mockReturnValueOnce(
+        modelReply({ tools: [{ name: "check_availability", input: { date: "2026-10-13" } }] }),
+      )
       .mockReturnValueOnce(modelReply({ text: ["We have 9 or 10 AM."] }));
 
     const { result } = await run();
@@ -122,7 +142,9 @@ describe("ToolLoopAgentRunner", () => {
   it("keeps text from two steps readable", async () => {
     checkAvailability.execute.mockResolvedValue({ content: "Free: 09:00" });
     stream
-      .mockReturnValueOnce(modelReply({ text: ["Sure."], tools: [{ name: "check_availability", input: {} }] }))
+      .mockReturnValueOnce(
+        modelReply({ text: ["Sure."], tools: [{ name: "check_availability", input: {} }] }),
+      )
       .mockReturnValueOnce(modelReply({ text: ["9 AM is free."] }));
 
     const { result } = await run();
@@ -133,7 +155,10 @@ describe("ToolLoopAgentRunner", () => {
   it("shows suggested replies after the text, without another model call", async () => {
     const options = ["Yes, right now", "Just dripping"];
     stream.mockReturnValueOnce(
-      modelReply({ text: ["Is it leaking right now?"], tools: [{ name: "suggest_replies", input: { options } }] }),
+      modelReply({
+        text: ["Is it leaking right now?"],
+        tools: [{ name: "suggest_replies", input: { options } }],
+      }),
     );
 
     const { result, events } = await run();
@@ -145,14 +170,18 @@ describe("ToolLoopAgentRunner", () => {
 
   it("stops after 4 model calls, even if the model keeps asking for tools", async () => {
     checkAvailability.execute.mockResolvedValue({ content: "Free: 09:00" });
-    stream.mockImplementation(() => modelReply({ tools: [{ name: "check_availability", input: {} }] }));
+    stream.mockImplementation(() =>
+      modelReply({ tools: [{ name: "check_availability", input: {} }] }),
+    );
 
     const { result, events } = await run();
 
     expect(stream).toHaveBeenCalledTimes(4);
     expect(checkAvailability.execute).toHaveBeenCalledTimes(4);
     // The customer never gets an empty reply.
-    expect(events).toEqual([{ type: "text", text: "Happy to help. Could you tell me a bit more?" }]);
+    expect(events).toEqual([
+      { type: "text", text: "Happy to help. Could you tell me a bit more?" },
+    ]);
     expect(result.text).toBe("Happy to help. Could you tell me a bit more?");
   });
 
@@ -174,7 +203,9 @@ describe("ToolLoopAgentRunner", () => {
 
   it("refuses to run a tool that wasn't offered (e.g. booking in preview mode)", async () => {
     stream
-      .mockReturnValueOnce(modelReply({ tools: [{ name: "book_appointment", input: { time: "09:00" } }] }))
+      .mockReturnValueOnce(
+        modelReply({ tools: [{ name: "book_appointment", input: { time: "09:00" } }] }),
+      )
       .mockReturnValueOnce(modelReply({ text: ["I can't book here."] }));
 
     const { result } = await run([checkAvailability]); // booking not offered

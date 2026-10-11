@@ -27,7 +27,10 @@ describe("Agent settings (e2e)", () => {
   });
 
   it("rejects invalid settings with details for each field, and saves nothing", async () => {
-    const res = await t.asOwner.put("/v1/agent-settings").send({ ...valid, tone: "rude", agentName: "" }).expect(400);
+    const res = await t.asOwner
+      .put("/v1/agent-settings")
+      .send({ ...valid, tone: "rude", agentName: "" })
+      .expect(400);
 
     const paths = res.body.error.details.map((d: { path: string }) => d.path);
     expect(paths).toEqual(expect.arrayContaining(["tone", "agentName"]));

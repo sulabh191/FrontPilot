@@ -12,9 +12,21 @@ export const rapidPlumbing = {
   ],
   services: [
     { name: "Leak repair", price: "from $149", description: "Sinks, faucets, pipes and fixtures." },
-    { name: "Drain cleaning", price: "from $189", description: "Kitchen, bathroom and main lines." },
-    { name: "Water heaters", price: "from $1,450 installed", description: "Tank and tankless, repair or replace." },
-    { name: "Toilet repair", price: "from $129", description: "Running, clogged or leaking toilets." },
+    {
+      name: "Drain cleaning",
+      price: "from $189",
+      description: "Kitchen, bathroom and main lines.",
+    },
+    {
+      name: "Water heaters",
+      price: "from $1,450 installed",
+      description: "Tank and tankless, repair or replace.",
+    },
+    {
+      name: "Toilet repair",
+      price: "from $129",
+      description: "Running, clogged or leaking toilets.",
+    },
     { name: "Burst pipes", price: "from $249", description: "Fast response to stop the damage." },
     { name: "Sump pumps", price: "from $950 installed", description: "Install, replace and test." },
   ],

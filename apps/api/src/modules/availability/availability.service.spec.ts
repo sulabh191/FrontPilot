@@ -100,7 +100,11 @@ describe("AvailabilityService", () => {
     ["a closed day (Sunday)", "2026-10-18", "The business is closed that day."],
     ["more than 14 days ahead", "2026-10-27", "Bookings open up to 14 days ahead."],
   ])("is closed for %s", async (_label, date, reason) => {
-    expect(await service.getSlots(TENANT, date, NOW)).toEqual({ status: "closed", timeZone: NY, reason });
+    expect(await service.getSlots(TENANT, date, NOW)).toEqual({
+      status: "closed",
+      timeZone: NY,
+      reason,
+    });
   });
 
   it("allows booking exactly 14 days ahead", async () => {

@@ -13,7 +13,9 @@ export class OverviewController {
   constructor(private readonly overview: OverviewService) {}
 
   @Get()
-  @ApiOperation({ summary: "Dashboard summary: last 7 days, items needing attention, upcoming visits" })
+  @ApiOperation({
+    summary: "Dashboard summary: last 7 days, items needing attention, upcoming visits",
+  })
   @ApiOkResponse({ schema: openApiSchema(overviewSchema, "output") })
   get(@CurrentTenant() tenant: Tenant) {
     return this.overview.get(tenant);

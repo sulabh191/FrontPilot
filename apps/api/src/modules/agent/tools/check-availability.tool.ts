@@ -16,7 +16,10 @@ export class CheckAvailabilityTool implements AgentTool {
     input_schema: {
       type: "object",
       properties: {
-        date: { type: "string", description: "Day to check, YYYY-MM-DD, in the business's time zone." },
+        date: {
+          type: "string",
+          description: "Day to check, YYYY-MM-DD, in the business's time zone.",
+        },
       },
       required: ["date"],
     },
@@ -31,12 +34,23 @@ export class CheckAvailabilityTool implements AgentTool {
 
     const result = await this.availability.getSlots(ctx.tenant.id, parsed.data.date);
     if (result.status === "closed") {
-      return { content: JSON.stringify({ date: parsed.data.date, available: false, reason: result.reason }) };
+      return {
+        content: JSON.stringify({
+          date: parsed.data.date,
+          available: false,
+          reason: result.reason,
+        }),
+      };
     }
     const tz = result.timeZone;
     const times = result.slots.map((slot) => ({
       label: slot.toLocaleTimeString("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" }),
-      value: slot.toLocaleTimeString("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }),
+      value: slot.toLocaleTimeString("en-GB", {
+        timeZone: tz,
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+      }),
     }));
     return { content: JSON.stringify({ date: parsed.data.date, available: true, times }) };
   }

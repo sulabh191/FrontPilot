@@ -28,7 +28,11 @@ class PublicController {
   anyRoute() {}
 }
 
-type FakeRequest = { headers: Record<string, string>; header(name: string): string | undefined; tenant?: Tenant };
+type FakeRequest = {
+  headers: Record<string, string>;
+  header(name: string): string | undefined;
+  tenant?: Tenant;
+};
 
 // The guard only needs: which handler/class is being called, and the request.
 function contextFor(handler: object, cls: object, authorization?: string) {
@@ -104,7 +108,9 @@ describe("AuthGuard", () => {
     verifier.verify.mockResolvedValue({ tenantSlug: "closed-down" });
     tenants.findBySlug.mockResolvedValue(null);
 
-    await expect(guard.canActivate(protectedRoute("Bearer old-token").context)).rejects.toThrow("Unknown business");
+    await expect(guard.canActivate(protectedRoute("Bearer old-token").context)).rejects.toThrow(
+      "Unknown business",
+    );
   });
 
   it("attaches the token's business to the request (never one chosen by the caller)", async () => {

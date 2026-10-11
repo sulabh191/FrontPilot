@@ -14,7 +14,8 @@ export function maskPhone(phone: string | null | undefined): string {
 
   const last4 = digits.slice(-4);
   // International format: keep the country code (digits before the 10-digit national number).
-  const countryCode = trimmed.startsWith("+") && digits.length > 10 ? digits.slice(0, digits.length - 10) : "";
+  const countryCode =
+    trimmed.startsWith("+") && digits.length > 10 ? digits.slice(0, digits.length - 10) : "";
   const hidden = digits.length - countryCode.length - last4.length;
   return `${countryCode ? `+${countryCode}` : ""}${DOT.repeat(hidden)}${last4}`;
 }

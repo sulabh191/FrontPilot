@@ -9,7 +9,9 @@ export default async function setup() {
 
   // Safety net: this drops a database, so refuse anything that isn't clearly a test database.
   if (!/^[a-z0-9_]+_test$/.test(name)) {
-    throw new Error(`Refusing to reset "${name}": e2e tests only run on a database whose name ends in _test.`);
+    throw new Error(
+      `Refusing to reset "${name}": e2e tests only run on a database whose name ends in _test.`,
+    );
   }
 
   const admin = createDatabase(ADMIN_DATABASE_URL, { maxConnections: 1 });

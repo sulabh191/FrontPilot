@@ -24,7 +24,7 @@ export function UpcomingAppointments({ appointments }: { appointments: UpcomingA
             >
               <div className="min-w-0">
                 <p className="text-sm font-medium">{appt.customer}</p>
-                <p className="text-muted-foreground text-xs">
+                <p className="text-xs text-muted-foreground">
                   {appt.service} · {appt.when}
                 </p>
               </div>

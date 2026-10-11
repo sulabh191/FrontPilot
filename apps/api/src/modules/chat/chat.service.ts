@@ -31,8 +31,13 @@ export class ChatService {
       const existing = await this.conversations.findOne(tenant.id, request.conversationId);
       if (!existing) throw new NotFoundException("Conversation not found");
       conversationId = existing.id;
-      if ((await this.conversations.countMessages(conversationId)) >= MAX_MESSAGES_PER_CONVERSATION) {
-        throw new HttpException("This conversation is too long. Please start a new chat.", HttpStatus.TOO_MANY_REQUESTS);
+      if (
+        (await this.conversations.countMessages(conversationId)) >= MAX_MESSAGES_PER_CONVERSATION
+      ) {
+        throw new HttpException(
+          "This conversation is too long. Please start a new chat.",
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
       }
     } else {
       conversationId = await this.conversations.create(tenant.id);
