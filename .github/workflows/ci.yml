@@ -63,6 +63,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Code style is not up for debate in review: unformatted code fails CI.
+      # Fix locally with: pnpm format
+      - name: Format check
+        run: pnpm format:check
+
       # Turbo builds the shared packages first (^build), then checks every workspace.
       - name: Typecheck
         run: pnpm typecheck

@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from "@nestjs/common";
 import { appointments, eq, leads, tenants, type Database } from "@frontpilot/db";
 import { formatInZone } from "../../common/time/time-zone";
 import { DATABASE } from "../../database/database.constants";
+import { maskPhone } from "../../common/logging/mask";
 import { toE164 } from "./phone";
 import { SMS_PROVIDER, type SmsProvider } from "./sms-provider";
 import { smsTemplates } from "./sms-templates";
@@ -45,7 +46,7 @@ export class NotificationsService {
 
       const to = toE164(row.phone);
       if (!to) {
-        this.logger.warn(`SMS skipped (invalid phone "${row.phone}") for appointment ${appointmentId}`);
+        this.logger.warn(`SMS skipped (invalid phone ${maskPhone(row.phone)}) for appointment ${appointmentId}`);
         return;
       }
 

@@ -316,6 +316,7 @@ SELECT id, hash, created_at FROM drizzle.__drizzle_migrations ORDER BY id;
 | Prompt injection via history | The widget sends only the new message; history is loaded from the database, so a visitor can't forge earlier messages. |
 | Private settings | The public widget endpoint returns only safe fields; internal instructions and tool settings never leave the API. |
 | SMS consent | Texts are sent only if the customer agreed; consent is stored per lead; a failed SMS is logged and never breaks a booking. |
+| Personal data in logs | Phone numbers are masked in logs (`+1••••••0123`, `common/logging/mask.ts`); logs travel to other tools and are kept for months |
 
 ---
 
@@ -438,6 +439,7 @@ pnpm test:e2e    # end-to-end tests: the real API over HTTP against a test datab
 | `common/time/time-zone.spec.ts` | UTC ↔ business time: summer and winter time, both daylight-saving days, half-hour offsets, local date vs UTC date |
 | `modules/availability/availability.service.spec.ts` | Slots from opening hours, 60-minute notice, Saturday hours, booked and overlapping bookings removed, past / closed / beyond-14-days, fully booked, no opening hours (fixed "now", fake repository) |
 | `common/auth/auth.guard.spec.ts` | `@Public()` routes and controllers, missing or malformed header, unknown token, deleted business, the business taken from the token (fake verifier) |
+| `common/logging/mask.spec.ts` | Phone masking: US and international formats, only the last 4 digits ever shown, short and missing values |
 | `common/auth/dev-token.verifier.spec.ts` | Correct token, wrong token, shorter or longer tokens rejected without crashing, no token configured |
 | `modules/agent/tools/tool-registry.service.spec.ts` | Which tools each business gets; preview mode never offers a tool with side effects |
 | `modules/agent/runner/tool-loop.agent-runner.spec.ts` | The agent loop with a **fake Claude**: streaming, tool round-trip with the server's tenant context, readable multi-step text, suggestions without an extra call, 4-call limit with a fallback reply, crashing tools, tools that weren't offered, abort signal |
@@ -621,7 +623,7 @@ Features map API codes to UI labels in one place (`server/queries.ts`); componen
 | `pnpm test` | Unit tests (all packages that have them) |
 | `pnpm test:e2e` | End-to-end tests against the `frontpilot_test` database |
 | `pnpm --filter @frontpilot/api test:watch` | Unit tests, re-run on every save |
-| `pnpm format` | Format with Prettier |
+| `pnpm format` / `pnpm format:check` | Format with Prettier / check formatting (CI runs the check) |
 | `pnpm api:generate` | Export the OpenAPI spec and regenerate `packages/api-client` |
 | `pnpm db:up` / `pnpm db:down` | Start / stop local Postgres |
 | `pnpm db:generate` | Create a SQL migration after changing `packages/db/src/schema.ts` |
@@ -636,7 +638,6 @@ Features map API codes to UI labels in one place (`server/queries.ts`); componen
 Honest notes on what is not production-ready yet:
 
 - **Authentication** uses one development token per environment; real sign-in and organizations are planned.
-- **Phone numbers appear in plain text in the API log** for SMS; they should be masked.
 - **Business facts** for the agent are hard-coded for the demo business; a knowledge base (RAG) replaces this.
 - **Rate limits are in memory**, per API instance; multiple instances would need a shared store (e.g. Redis).
 - **The web app has no automated tests**: its logic lives in the API; browser tests (e.g. Playwright) could be added.
@@ -654,10 +655,10 @@ Honest notes on what is not production-ready yet:
 - [x] NestJS API serving every client: auth guard, tenant isolation, validation, one error format, request IDs, rate limits, OpenAPI docs
 - [x] Typed API client generated from the OpenAPI spec; web app is a pure frontend
 - [x] Automated tests: unit tests with fakes through DI, end-to-end tests with Supertest against a real test database
-- [x] GitHub Actions CI: typecheck, lint, build, unit and end-to-end tests (with a Postgres service) on every push and pull request
+- [x] GitHub Actions CI: format check, typecheck, lint, build, unit and end-to-end tests (with a Postgres service) on every push and pull request
+- [x] Hardening: database-level double-booking guard, phone numbers masked in logs, enforced formatting
 
 **Next**
-- [ ] Hardening: PII masking in logs, Prettier check in CI
 - [ ] Knowledge base (RAG): document upload, chunking, embeddings, Qdrant search
 - [ ] Authentication and organizations (one dashboard per business)
 - [ ] Deployment: web on Vercel; API, Postgres and Qdrant on managed hosting

@@ -3,3 +3,9 @@ node_modules
 .turbo
 dist
 pnpm-lock.yaml
+
+# Generated files: written by tools, never formatted by hand
+packages/db/drizzle
+packages/api-client/src/schema.ts
+apps/api/openapi.json
+apps/web/next-env.d.ts
