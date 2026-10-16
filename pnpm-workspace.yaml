@@ -5,4 +5,6 @@ allowBuilds:
   "@scarf/scarf": false # install-time analytics from swagger-ui; not needed
   "@swc/core": true # compiler used by the API tests (decorator metadata)
   esbuild: true
+  onnxruntime-node: true #set this to true or false
+  protobufjs: false #set this to true or false
   unrs-resolver: true

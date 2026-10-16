@@ -21,7 +21,8 @@ const knowledge = [
   "24/7 emergency line for burst pipes and flooding.",
   "Hours: Monday to Friday 7 AM to 7 PM.",
   "The weather is lovely today.",
-  "Rapid Plumbing has served Springfield families for many years. ".repeat(40) + "We also install sump pumps.",
+  "Rapid Plumbing has served Springfield families for many years. ".repeat(40) +
+    "We also install sump pumps.",
 ];
 
 // 3. Turn every text into a vector, in ONE batched call.

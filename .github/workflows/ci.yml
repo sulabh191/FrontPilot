@@ -26,7 +26,7 @@ jobs:
     # A real Postgres for the end-to-end tests, like `pnpm db:up` locally.
     services:
       postgres:
-        image: postgres:17-alpine
+        image: pgvector/pgvector:pg17 # was: postgres:17-alpine
         env:
           POSTGRES_USER: frontpilot
           POSTGRES_PASSWORD: frontpilot
