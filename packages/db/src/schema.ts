@@ -10,6 +10,7 @@ import {
   timestamp,
   uniqueIndex,
   uuid,
+  vector,
 } from "drizzle-orm/pg-core";
 
 // ---------- shared column helpers ----------
@@ -168,5 +169,78 @@ export const appointments = pgTable(
     uniqueIndex(APPOINTMENT_SLOT_UNIQUE)
       .on(t.tenantId, t.startsAt)
       .where(sql`${t.status} <> 'cancelled'`),
+  ],
+);
+
+// ---------- Knowledge base (RAG) ----------
+
+// Where a document's text came from. Every source is extracted to plain text first;
+// chunking, embedding and search are the same for all of them.
+export const knowledgeSourceEnum = pgEnum("knowledge_source", [
+  "text",
+  "markdown",
+  "pdf",
+  "docx",
+  "url",
+]);
+export const knowledgeStatusEnum = pgEnum("knowledge_status", ["processing", "ready", "failed"]);
+
+// Must equal the embedding model's output size (all-MiniLM-L6-v2 → 384).
+// Changing models means a new column size and re-embedding every chunk.
+export const EMBEDDING_DIMENSIONS = 384;
+
+// One row per document a business adds: pasted text, a file (Markdown, PDF, Word) or one web page.
+export const knowledgeDocuments = pgTable(
+  "knowledge_documents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    title: text("title").notNull(), // file name, page title, or what the owner typed
+    sourceType: knowledgeSourceEnum("source_type").notNull(),
+    fileName: text("file_name"), // uploads only (PDF, Word, Markdown)
+    sourceUrl: text("source_url"), // web pages only
+    contentHash: text("content_hash").notNull(), // SHA-256 of the extracted text: detects duplicates and unchanged pages
+    status: knowledgeStatusEnum("status").notNull().default("processing"),
+    error: text("error"), // why processing failed, shown to the owner
+    embeddingModel: text("embedding_model").notNull(), // which model made this document's vectors
+    chunkCount: integer("chunk_count").notNull().default(0),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("knowledge_documents_tenant_created_idx").on(t.tenantId, t.createdAt),
+    uniqueIndex("knowledge_documents_tenant_hash_unique").on(t.tenantId, t.contentHash),
+  ],
+);
+
+// One row per chunk: the text the agent reads + the vector we search by.
+export const knowledgeChunks = pgTable(
+  "knowledge_chunks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // Repeated from the document on purpose: search filters by tenant without a join.
+    tenantId: text("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    documentId: uuid("document_id")
+      .notNull()
+      .references(() => knowledgeDocuments.id, { onDelete: "cascade" }),
+    chunkIndex: integer("chunk_index").notNull(), // position in the document (0, 1, 2…)
+    heading: text("heading"), // section it came from, e.g. "Services › Drain cleaning"
+    content: text("content").notNull(),
+
+    // ★ pgvector 1: a column of type vector(384), one embedding per chunk.
+    embedding: vector("embedding", { dimensions: EMBEDDING_DIMENSIONS }).notNull(),
+
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("knowledge_chunks_document_position_unique").on(t.documentId, t.chunkIndex),
+    index("knowledge_chunks_tenant_idx").on(t.tenantId),
+
+    // ★ pgvector 2: an HNSW index for fast "nearest vectors by cosine distance" search.
+    index("knowledge_chunks_embedding_hnsw_idx").using("hnsw", t.embedding.op("vector_cosine_ops")),
   ],
 );
