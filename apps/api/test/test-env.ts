@@ -24,4 +24,5 @@ export const testEnv = {
   CORS_ORIGINS: TRUSTED_ORIGIN,
   SMS_PROVIDER: "console", // replaced by a fake in tests anyway
   ANTHROPIC_API_KEY: "not-a-real-key", // the model is replaced by a fake in tests
+  EMBEDDINGS_PROVIDER: "fake", // deterministic, instant, no model download in tests or CI
 };

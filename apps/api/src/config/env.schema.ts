@@ -25,6 +25,9 @@ export const envSchema = z
     // Claude. The key is optional so the API can start without it; the agent reports a clear error.
     ANTHROPIC_API_KEY: z.string().min(1).optional(),
     ANTHROPIC_MODEL: z.string().default("claude-haiku-4-5-20251001"),
+    // Embeddings for the knowledge base: "local" runs all-MiniLM-L6-v2 inside the API
+    // (free, no key); "fake" is a deterministic stand-in for tests and CI.
+    EMBEDDINGS_PROVIDER: z.enum(["local", "fake"]).default("local"),
     // SMS: "console" prints texts in the log (development), "twilio" sends real ones.
     SMS_PROVIDER: z.enum(["console", "twilio"]).default("console"),
     TWILIO_ACCOUNT_SID: z.string().optional(),

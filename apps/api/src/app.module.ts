@@ -12,6 +12,7 @@ import { ChatModule } from "./modules/chat/chat.module";
 import { AvailabilityModule } from "./modules/availability/availability.module";
 import { ConversationsModule } from "./modules/conversations/conversations.module";
 import { HealthModule } from "./modules/health/health.module";
+import { KnowledgeModule } from "./modules/knowledge/knowledge.module";
 import { LeadsModule } from "./modules/leads/leads.module";
 import { OverviewModule } from "./modules/overview/overview.module";
 import { TenantsModule } from "./modules/tenants/tenants.module";
@@ -38,6 +39,7 @@ import { TenantsModule } from "./modules/tenants/tenants.module";
     AgentSettingsModule,
     AgentModule,
     ChatModule,
+    KnowledgeModule,
   ],
 })
 export class AppModule implements NestModule {
